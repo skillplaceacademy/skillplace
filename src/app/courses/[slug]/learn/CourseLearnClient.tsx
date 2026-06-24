@@ -17,6 +17,7 @@ interface Lesson {
   title: string
   content_type: 'video' | 'pdf' | 'quiz' | 'text'
   video_url: string | null
+  video_id: string | null
   pdf_url: string | null
   text_content: string | null
   is_free: boolean
@@ -69,10 +70,10 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
           .select('id')
           .eq('user_id', currentUser.id)
           .eq('course_id', course.id)
-          .limit(1)
+          .single()
+
         setEnrolled(!!enrollment)
       }
-
       setLoading(false)
     }
 
@@ -88,7 +89,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
           .select('id')
           .eq('user_id', session.user.id)
           .eq('course_id', course.id)
-          .limit(1)
+          .single()
           .then(({ data }) => {
             setEnrolled(!!data)
             setLoading(false)
@@ -225,6 +226,64 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
 
   // Enrollment guard — show overlay for paid courses
   if (!enrolled && course.price > 0) {
+    const finalPrice = course.discount_price || course.price
+    const handlePayment = async () => {
+      try {
+        const res = await fetch('/api/payments/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId: course.id, userId: user.id }),
+        })
+        const data = await res.json()
+
+        if (data.free) {
+          window.location.href = data.redirectUrl
+          return
+        }
+
+        if (data.success === false && data.orderId) {
+          const options = {
+            key: data.key,
+            amount: data.amount,
+            currency: data.currency,
+            name: 'Skillplace Academy',
+            description: course.title,
+            order_id: data.orderId,
+            handler: async function (response: any) {
+              const verifyRes = await fetch('/api/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              })
+              const verifyData = await verifyRes.json()
+              if (verifyData.success) {
+                setEnrolled(true)
+                window.location.href = verifyData.redirectUrl
+              }
+            },
+            prefill: {
+              name: user?.user_metadata?.full_name || '',
+              email: user?.email || '',
+            },
+            theme: { color: '#2563eb' },
+          }
+          const script = document.createElement('script')
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+          script.onload = () => {
+            const rzp = new (window as any).Razorpay(options)
+            rzp.open()
+          }
+          document.body.appendChild(script)
+        }
+      } catch (err) {
+        console.error('Payment error:', err)
+      }
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center max-w-md shadow-sm">
@@ -243,20 +302,9 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
           <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 w-full"
-            onClick={async () => {
-              const { error } = await supabase.from('enrollments').insert({
-                user_id: user.id,
-                course_id: course.id,
-                status: 'active',
-                progress_percent: 0,
-              })
-              if (!error) {
-                setEnrolled(true)
-                window.location.reload()
-              }
-            }}
+            onClick={handlePayment}
           >
-            Enroll Now
+            Enroll Now — ₹{finalPrice.toLocaleString()}
           </Button>
           <Link href={`/courses/${course.slug}`}>
             <Button variant="ghost" size="sm" className="mt-3">Back to Course</Button>
@@ -311,11 +359,12 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
         <main className="flex-1 overflow-y-auto p-8">
           {activeLesson && (
             <div className="max-w-4xl mx-auto">
-              {/* Video */}
-              {activeLesson.content_type === 'video' && activeLesson.video_url && (
+              {/* Video - Cloudflare Stream (video_id) or legacy URL fallback */}
+              {activeLesson.content_type === 'video' && (
                 <div className="mb-6">
                   <SecureVideoPlayer
-                    videoUrl={activeLesson.video_url}
+                    videoId={activeLesson.video_id || undefined}
+                    videoUrl={activeLesson.video_url || undefined}
                     lessonId={activeLesson.id}
                     courseId={course.id}
                     studentName={user?.user_metadata?.full_name || user?.email || 'Student'}

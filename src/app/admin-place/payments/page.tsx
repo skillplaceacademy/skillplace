@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Search, Download } from 'lucide-react'
-import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Search, Download, CreditCard, TrendingUp, Clock, CheckCircle } from 'lucide-react'
+import { getRecords } from '@/lib/admin-api'
 
 interface Payment {
   id: string
@@ -38,12 +39,93 @@ export default function AdminPaymentsPage() {
     p.courses?.title?.toLowerCase().includes(search.toLowerCase())
   )
 
+  const totalRevenue = payments
+    .filter((p) => p.status === 'completed')
+    .reduce((sum, p) => sum + p.amount, 0)
+  const completedCount = payments.filter((p) => p.status === 'completed').length
+  const pendingCount = payments.filter((p) => p.status === 'pending').length
+
+  const now = new Date()
+  const thisMonth = payments.filter((p) => {
+    const d = new Date(p.created_at)
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && p.status === 'completed'
+  })
+  const revenueThisMonth = thisMonth.reduce((sum, p) => sum + p.amount, 0)
+
+  const courseRevenue: Record<string, number> = {}
+  payments
+    .filter((p) => p.status === 'completed')
+    .forEach((p) => {
+      const title = p.courses?.title || 'Unknown'
+      courseRevenue[title] = (courseRevenue[title] || 0) + p.amount
+    })
+  const topCourses = Object.entries(courseRevenue)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Payment Management</h1>
         <Button variant="outline" className="gap-2 border-slate-300 hover:bg-slate-50"><Download className="h-4 w-4" /> Export CSV</Button>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="border-slate-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">Total Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">₹{totalRevenue.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-slate-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">Completed</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{completedCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-slate-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">Pending</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{pendingCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-slate-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">This Month</CardTitle>
+            <CreditCard className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">₹{revenueThisMonth.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {topCourses.length > 0 && (
+        <Card className="border-slate-200 mb-6">
+          <CardHeader>
+            <CardTitle className="text-slate-900">Top Selling Courses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topCourses.map(([title, revenue]) => (
+                <div key={title} className="flex items-center justify-between">
+                  <span className="text-sm text-slate-700">{title}</span>
+                  <span className="text-sm font-bold text-slate-900">₹{revenue.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">

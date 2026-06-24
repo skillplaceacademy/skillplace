@@ -1,24 +1,57 @@
 import Razorpay from 'razorpay'
+import crypto from 'crypto'
+
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || ''
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || ''
+const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || ''
 
 export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  key_id: RAZORPAY_KEY_ID,
+  key_secret: RAZORPAY_KEY_SECRET,
 })
 
-export async function createOrder(amount: number, currency: string = 'INR') {
+export async function createOrder(
+  amount: number,
+  currency: string = 'INR',
+  receipt?: string,
+  notes?: Record<string, string>
+) {
   const order = await razorpay.orders.create({
     amount: amount * 100,
     currency,
-    receipt: `order_${Date.now()}`,
+    receipt: receipt || `order_${Date.now()}`,
+    ...(notes && { notes }),
   })
   return order
 }
 
-export function verifyPayment(orderId: string, paymentId: string, signature: string) {
-  const crypto = require('crypto')
+export function verifyPaymentSignature(
+  orderId: string,
+  paymentId: string,
+  signature: string
+): boolean {
+  const body = orderId + '|' + paymentId
   const expectedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
-    .update(`${orderId}|${paymentId}`)
+    .createHmac('sha256', RAZORPAY_KEY_SECRET)
+    .update(body)
     .digest('hex')
   return expectedSignature === signature
 }
+
+export function verifyWebhookSignature(
+  body: string,
+  signature: string
+): boolean {
+  const expectedSignature = crypto
+    .createHmac('sha256', RAZORPAY_WEBHOOK_SECRET)
+    .update(body)
+    .digest('hex')
+  return expectedSignature === signature
+}
+
+export async function fetchPayment(paymentId: string) {
+  const payment = await razorpay.payments.fetch(paymentId)
+  return payment
+}
+
+export { RAZORPAY_KEY_ID }

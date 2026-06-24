@@ -59,6 +59,7 @@ export interface Lesson {
   description: string | null
   content_type: 'video' | 'pdf' | 'quiz' | 'text'
   video_url: string | null
+  video_id: string | null
   video_duration: number | null
   pdf_url: string | null
   text_content: string | null

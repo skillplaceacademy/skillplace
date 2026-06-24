@@ -102,7 +102,7 @@ export default async function AdminDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-slate-900">₹{p.amount}</p>
+                      <p className="text-sm font-bold text-slate-900">₹{(p.amount / 100).toLocaleString()}</p>
                       <p className={`text-xs font-medium ${p.status === 'completed' ? 'text-green-600' : 'text-yellow-600'}`}>
                         {p.status}
                       </p>

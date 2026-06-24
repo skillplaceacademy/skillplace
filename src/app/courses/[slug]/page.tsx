@@ -3,8 +3,7 @@ import { Clock, BarChart3, Users, Play, BookOpen, Award, CheckCircle, ArrowRight
 import { getCourseBySlug } from '@/lib/supabase/queries'
 import { notFound } from 'next/navigation'
 import { adminSupabase } from '@/lib/supabase/admin'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import EnrollmentButton from '@/components/courses/EnrollmentButton'
+import EnrollButton from '@/components/courses/EnrollButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,9 +15,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
     notFound()
   }
 
-  // Use server client for enrollment count (works with cookies)
-  const serverSupabase = await createSupabaseServerClient()
-  const { count: enrollmentCount } = await serverSupabase
+  // Use admin client for enrollment count
+  const { count: enrollmentCount } = await adminSupabase
     .from('enrollments')
     .select('id', { count: 'exact', head: true })
     .eq('course_id', course.id)
@@ -122,7 +120,13 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                     )}
                   </div>
                   
-                  <EnrollmentButton courseId={course.id} courseSlug={course.slug} price={course.price} />
+                  <EnrollButton
+                    courseId={course.id}
+                    courseSlug={course.slug}
+                    price={course.price}
+                    discountPrice={course.discount_price}
+                    title={course.title}
+                  />
                   
                   <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
                     {[
@@ -232,7 +236,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             Join {enrollmentCount || 0}+ students who have transformed their careers with Skillplace Academy.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <EnrollmentButton courseId={course.id} courseSlug={course.slug} price={course.price} size="lg" />
+            <EnrollButton courseId={course.id} courseSlug={course.slug} price={course.price} discountPrice={course.discount_price} title={course.title} size="lg" />
             <a href="/contact" className="inline-flex items-center gap-2 text-white hover:text-blue-100 font-medium">
               Need help? Contact us <ArrowRight className="h-4 w-4" />
             </a>

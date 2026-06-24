@@ -1,8 +1,12 @@
+'use client'
+
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Shield, AlertTriangle, Play, Pause, Volume2, VolumeX, Maximize, Loader2, EyeOff } from 'lucide-react'
+import Hls from 'hls.js'
 
 interface SecureVideoPlayerProps {
-  videoUrl: string
+  videoUrl?: string
+  videoId?: string
   lessonId: string
   courseId: string
   studentName: string
@@ -12,6 +16,7 @@ interface SecureVideoPlayerProps {
 
 export default function SecureVideoPlayer({
   videoUrl,
+  videoId,
   lessonId,
   courseId,
   studentName,
@@ -20,6 +25,7 @@ export default function SecureVideoPlayer({
 }: SecureVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const hlsRef = useRef<Hls | null>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -31,6 +37,63 @@ export default function SecureVideoPlayer({
   const [showTabWarning, setShowTabWarning] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!videoId || !videoRef.current) return
+
+    let destroyed = false
+    const video = videoRef.current
+
+    async function loadSignedUrl() {
+      try {
+        setLoading(true)
+        const res = await fetch(`/api/video/${videoId}`)
+        const data = await res.json()
+
+        if (destroyed) return
+
+        if (!res.ok || data.error) {
+          setError(data.error || 'Failed to load video')
+          return
+        }
+
+        const { playbackUrl } = data
+
+        if (Hls.isSupported()) {
+          const hls = new Hls({
+            xhrSetup: (xhr) => {
+              xhr.withCredentials = false
+            },
+          })
+          hlsRef.current = hls
+          hls.loadSource(playbackUrl)
+          hls.attachMedia(video)
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            setLoading(false)
+          })
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (data.fatal) {
+              setError('Failed to load video stream')
+            }
+          })
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = playbackUrl
+        }
+      } catch {
+        if (!destroyed) setError('Failed to load video')
+      }
+    }
+
+    loadSignedUrl()
+
+    return () => {
+      destroyed = true
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+        hlsRef.current = null
+      }
+    }
+  }, [videoId])
 
   // Move watermark every 10 seconds
   useEffect(() => {
@@ -196,7 +259,7 @@ export default function SecureVideoPlayer({
         onError={() => setError('Failed to load video')}
         onClick={togglePlay}
       >
-        <source src={videoUrl} type="video/mp4" />
+        {!videoId && videoUrl && <source src={videoUrl} type="video/mp4" />}
       </video>
 
       {/* Loading */}
