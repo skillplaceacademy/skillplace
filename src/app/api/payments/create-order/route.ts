@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error'
+    console.error('Create order error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

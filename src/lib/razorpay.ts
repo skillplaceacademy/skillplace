@@ -16,13 +16,24 @@ export async function createOrder(
   receipt?: string,
   notes?: Record<string, string>
 ) {
-  const order = await razorpay.orders.create({
-    amount: amount * 100,
-    currency,
-    receipt: receipt || `order_${Date.now()}`,
-    ...(notes && { notes }),
-  })
-  return order
+  if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET || RAZORPAY_KEY_SECRET.length < 20) {
+    throw new Error('Razorpay credentials not configured properly. Please check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env.local')
+  }
+
+  try {
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
+      currency,
+      receipt: receipt || `order_${Date.now()}`,
+      ...(notes && { notes }),
+    })
+    return order
+  } catch (err: any) {
+    if (err?.error?.description) {
+      throw new Error(`Razorpay error: ${err.error.description}`)
+    }
+    throw err
+  }
 }
 
 export function verifyPaymentSignature(

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import Link from 'next/link'
 import { ShoppingCart, Play, LogIn } from 'lucide-react'
 
@@ -57,6 +58,7 @@ export default function EnrollmentButton({ courseId, courseSlug, price, size = '
 
   async function handleEnroll() {
     if (!user) {
+      notify.unauthorized()
       router.push('/login?redirectedFrom=/courses/' + courseSlug)
       return
     }
@@ -72,7 +74,10 @@ export default function EnrollmentButton({ courseId, courseSlug, price, size = '
 
     if (!error) {
       setEnrolled(true)
+      notify.enrollSuccess()
       window.location.href = '/courses/' + courseSlug + '/learn'
+    } else {
+      notify.enrollError()
     }
 
     setEnrolling(false)

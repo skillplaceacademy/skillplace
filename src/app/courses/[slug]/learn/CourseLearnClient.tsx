@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import {
   Play, ChevronRight, ChevronDown, BookOpen, FileText,
-  HelpCircle, CheckCircle, Download, Edit3, Save, Lock, ShoppingCart
+  HelpCircle, CheckCircle, Download, Edit3, Save, Lock, ShoppingCart, Menu
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import SecureVideoPlayer from '@/components/course/SecureVideoPlayer'
+import { cn } from '@/lib/utils'
 
 interface Lesson {
   id: string
@@ -56,6 +58,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
   const [user, setUser] = useState<any>(null)
   const [enrolled, setEnrolled] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Auth & enrollment check (all client-side using localStorage)
   useEffect(() => {
@@ -164,6 +167,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
       completed_at: new Date().toISOString(),
     })
     setCompletedLessons(prev => new Set([...prev, activeLesson.id]))
+    notify.lessonComplete(activeLesson.title)
   }
 
   async function saveNotes() {
@@ -174,9 +178,16 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
       content: notes,
       updated_at: new Date().toISOString(),
     })
+    notify.noteSaved()
   }
 
-  function submitQuiz() { setQuizSubmitted(true) }
+  function submitQuiz() {
+    setQuizSubmitted(true)
+    const total = quizQuestions.length
+    const correct = quizQuestions.filter(q => quizAnswers[q.id] === q.correct_answer).length
+    const score = total > 0 ? Math.round((correct / total) * 100) : 0
+    notify.quizSubmitted(score)
+  }
 
   function getYouTubeEmbed(url: string) {
     const match = url?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/)
@@ -262,6 +273,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
               const verifyData = await verifyRes.json()
               if (verifyData.success) {
                 setEnrolled(true)
+                notify.paymentSuccess()
                 window.location.href = verifyData.redirectUrl
               }
             },
@@ -281,6 +293,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
         }
       } catch (err) {
         console.error('Payment error:', err)
+        notify.paymentError()
       }
     }
 
@@ -318,22 +331,41 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
   return (
     <div className="bg-slate-50 min-h-screen">
       {/* Top Bar */}
-      <div className="bg-white border-b border-slate-200 px-6 py-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-slate-900">{course.title}</h1>
-            <p className="text-sm text-slate-500">{activeLesson?.title || 'Select a lesson'}</p>
+      <div className="bg-white border-b border-slate-200 px-3 md:px-6 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <button 
+              className="md:hidden p-2 rounded-lg hover:bg-slate-100 shrink-0"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <Menu className="h-5 w-5 text-slate-600" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-base md:text-lg font-bold text-slate-900 truncate">{course.title}</h1>
+              <p className="text-xs md:text-sm text-slate-500 truncate">{activeLesson?.title || 'Select a lesson'}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-500">{completedLessons.size}/{totalLessons} completed</span>
-            <div className="w-32"><Progress value={progressPercent} className="h-2" /></div>
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            <span className="text-xs md:text-sm text-slate-500 hidden sm:inline">{completedLessons.size}/{totalLessons}</span>
+            <div className="w-20 md:w-32"><Progress value={progressPercent} className="h-2" /></div>
           </div>
         </div>
       </div>
 
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-20 md:hidden" 
+          onClick={() => setSidebarOpen(false)} 
+        />
+      )}
+
       <div className="flex" style={{ height: 'calc(100vh - 73px)' }}>
         {/* Sidebar */}
-        <aside className="w-80 bg-white border-r border-slate-200 overflow-y-auto flex-shrink-0">
+        <aside className={cn(
+          "fixed md:static inset-y-0 left-0 z-30 w-80 bg-white border-r border-slate-200 overflow-y-auto flex-shrink-0 transition-transform duration-300 md:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}>
           {modules.map((module) => (
             <div key={module.id} className="border-b border-slate-100">
               <button className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-slate-50" onClick={() => toggleModule(module.id)}>
@@ -344,7 +376,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
                 <button
                   key={lesson.id}
                   className={`w-full flex items-center gap-3 px-6 py-2.5 text-left text-sm ${activeLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
-                  onClick={() => setActiveLesson(lesson)}
+                  onClick={() => { setActiveLesson(lesson); setSidebarOpen(false) }}
                 >
                   {completedLessons.has(lesson.id) ? <CheckCircle className="h-4 w-4 text-green-500 shrink-0" /> : <BookOpen className="h-4 w-4 shrink-0 text-slate-400" />}
                   <span className="truncate">{lesson.title}</span>
@@ -356,7 +388,7 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {activeLesson && (
             <div className="max-w-4xl mx-auto">
               {/* Video - Cloudflare Stream (video_id) or legacy URL fallback */}
@@ -457,10 +489,10 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
               </div>
 
               {/* Navigation */}
-              <div className="flex items-center justify-between pt-6 border-t border-slate-200">
-                <Button variant="outline" onClick={() => currentIndex > 0 && setActiveLesson(allLessons[currentIndex - 1])} disabled={currentIndex <= 0}>← Previous</Button>
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-slate-200">
+                <Button variant="outline" size="sm" onClick={() => currentIndex > 0 && setActiveLesson(allLessons[currentIndex - 1])} disabled={currentIndex <= 0}>← Previous</Button>
                 {!completedLessons.has(activeLesson?.id) && activeLesson?.content_type !== 'quiz' && (
-                  <Button onClick={markComplete} className="bg-green-600 hover:bg-green-700"><CheckCircle className="h-4 w-4 mr-2" /> Mark Complete</Button>
+                  <Button size="sm" onClick={markComplete} className="bg-green-600 hover:bg-green-700"><CheckCircle className="h-4 w-4 mr-2" /> Mark Complete</Button>
                 )}
                 <Button onClick={() => currentIndex < allLessons.length - 1 && setActiveLesson(allLessons[currentIndex + 1])} disabled={currentIndex >= allLessons.length - 1}>Next →</Button>
               </div>

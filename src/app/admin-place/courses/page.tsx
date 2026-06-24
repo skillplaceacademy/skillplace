@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, Edit, Trash2, X } from 'lucide-react'
 import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { notify } from '@/lib/notifications'
 
 interface Course {
   id: string
@@ -60,8 +61,10 @@ export default function AdminCoursesPage() {
     e.preventDefault()
     if (editingCourse) {
       await updateRecord('courses', editingCourse.id, formData)
+      notify.courseUpdated()
     } else {
       await createRecord('courses', formData)
+      notify.courseCreated()
     }
     setShowForm(false)
     setEditingCourse(null)
@@ -72,6 +75,7 @@ export default function AdminCoursesPage() {
   async function handleDelete(id: string) {
     if (!confirm('Are you sure you want to delete this course?')) return
     await deleteRecord('courses', id)
+    notify.courseDeleted()
     fetchData()
   }
 
@@ -113,7 +117,7 @@ export default function AdminCoursesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Course Management</h1>
         <Button
           className="gap-2 bg-blue-600 hover:bg-blue-700"
@@ -231,6 +235,7 @@ export default function AdminCoursesPage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
@@ -276,6 +281,7 @@ export default function AdminCoursesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

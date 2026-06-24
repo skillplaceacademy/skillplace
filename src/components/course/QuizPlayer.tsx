@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Clock, CheckCircle, XCircle, ChevronRight, RotateCcw } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import { cn } from '@/lib/utils'
 import type { Test, TestQuestion } from '@/types'
 
@@ -107,6 +108,12 @@ export default function QuizPlayer({ test, lessonId, onComplete }: QuizPlayerPro
       passed,
       showResults: true,
     }))
+
+    if (passed) {
+      notify.quizSubmitted(score)
+    } else {
+      notify.quizFailed()
+    }
 
     onComplete?.(passed, score)
   }

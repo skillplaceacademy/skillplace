@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { notify } from '@/lib/notifications'
 import ModuleCard from '@/components/admin/ModuleCard'
 import type { Module, Lesson } from '@/types'
 
@@ -61,12 +62,14 @@ export default function ModulesPage() {
 
     if (editingModule) {
       await updateRecord('modules', editingModule.id, formData)
+      notify.moduleUpdated()
     } else {
       await createRecord('modules', {
         ...formData,
         course_id: courseId,
         order_index: modules.length + 1,
       })
+      notify.moduleCreated()
     }
 
     setSaving(false)
@@ -79,6 +82,7 @@ export default function ModulesPage() {
   async function handleDelete() {
     if (!deletingModule) return
     await deleteRecord('modules', deletingModule.id)
+    notify.moduleDeleted()
     setShowDeleteConfirm(false)
     setDeletingModule(null)
     fetchModules()

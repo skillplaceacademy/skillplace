@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Search, Plus, Edit, Trash2 } from 'lucide-react'
 import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { notify } from '@/lib/notifications'
 
 interface Employee {
   id: string
@@ -64,8 +65,10 @@ export default function AdminEmployeesPage() {
           role: formData.role,
           is_active: formData.is_active,
         })
+        notify.employeeUpdated()
       } catch (err: any) {
         console.error('Error updating employee:', err)
+        notify.genericError('Failed to update employee.')
         return
       }
     } else {
@@ -77,8 +80,10 @@ export default function AdminEmployeesPage() {
           role: formData.role,
           is_active: formData.is_active,
         })
+        notify.employeeAdded()
       } catch (err: any) {
         console.error('Error creating employee:', err)
+        notify.genericError('Failed to create employee.')
         return
       }
     }
@@ -92,8 +97,10 @@ export default function AdminEmployeesPage() {
     if (!deletingEmployee) return
     try {
       await deleteRecord('profiles', deletingEmployee.id)
+      notify.employeeDeleted()
     } catch (err: any) {
       console.error('Error deleting employee:', err)
+      notify.genericError('Failed to delete employee.')
     }
     setShowDeleteConfirm(false)
     setDeletingEmployee(null)
@@ -103,8 +110,10 @@ export default function AdminEmployeesPage() {
   async function toggleStatus(employee: Employee) {
     try {
       await updateRecord('profiles', employee.id, { is_active: !employee.is_active })
+      notify.statusToggled(!employee.is_active)
     } catch (err: any) {
       console.error('Error toggling status:', err)
+      notify.genericError('Failed to toggle status.')
       return
     }
     fetchEmployees()
@@ -140,7 +149,7 @@ export default function AdminEmployeesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Employee Management</h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -255,6 +264,7 @@ export default function AdminEmployeesPage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
@@ -349,6 +359,7 @@ export default function AdminEmployeesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

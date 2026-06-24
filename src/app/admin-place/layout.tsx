@@ -24,6 +24,7 @@ export default function AdminLayout({
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [adminUser, setAdminUser] = useState<UserProfile | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     async function checkAuth() {
@@ -92,13 +93,30 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <AdminSidebar isAdmin={adminUser.role === 'admin'} />
-      <main className="flex-1 p-6 ml-64">
-        <div className="flex items-center justify-end gap-4 mb-4">
-          <span className="text-sm text-slate-500">
-            {adminUser.full_name || adminUser.email}
-          </span>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="border-slate-300 hover:bg-slate-50">Logout</Button>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-40 md:hidden" 
+          onClick={() => setSidebarOpen(false)} 
+        />
+      )}
+      <AdminSidebar isAdmin={adminUser.role === 'admin'} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <main className="flex-1 p-4 md:p-6 md:ml-64">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <button 
+            className="md:hidden p-2 rounded-lg hover:bg-slate-100"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-4 ml-auto">
+            <span className="text-sm text-slate-500 hidden sm:inline">
+              {adminUser.full_name || adminUser.email}
+            </span>
+            <Button variant="outline" size="sm" onClick={handleLogout} className="border-slate-300 hover:bg-slate-50">Logout</Button>
+          </div>
         </div>
         {children}
       </main>

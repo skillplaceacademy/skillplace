@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Menu, X, GraduationCap, Shield, User, LogOut, ShoppingBag, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -44,6 +45,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
+    notify.logoutSuccess()
     window.location.href = '/'
   }
 

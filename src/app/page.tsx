@@ -179,7 +179,7 @@ export default async function Home() {
       {/* Section 2: Stats */}
       <section className="py-14 bg-white border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {stats.map((s) => {
               const Icon = s.icon
               return (
@@ -197,7 +197,7 @@ export default async function Home() {
       </section>
 
       {/* Section 3: Programs */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-12 md:py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Our Programs</h2>
@@ -209,7 +209,7 @@ export default async function Home() {
               return (
                 <div
                   key={p.name}
-                  className={`relative bg-white p-8 rounded-2xl border transition-all duration-300 hover:shadow-lg ${
+                  className={`relative bg-white p-5 md:p-8 rounded-2xl border transition-all duration-300 hover:shadow-lg ${
                     p.popular ? 'border-blue-600 shadow-lg ring-1 ring-blue-600/10' : 'border-slate-200 hover:border-blue-200'
                   }`}
                 >
@@ -240,7 +240,7 @@ export default async function Home() {
       </section>
 
       {/* Section 4: Courses */}
-      <section className="py-20 bg-white">
+      <section className="py-12 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Job-Oriented Courses</h2>
@@ -290,7 +290,7 @@ export default async function Home() {
       </section>
 
       {/* Section 5: Why Choose Us */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-12 md:py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Why Choose Skillplace Academy?</h2>
@@ -300,7 +300,7 @@ export default async function Home() {
             {whyChooseUs.map((item) => {
               const Icon = item.icon
               return (
-                <div key={item.title} className="bg-white p-7 rounded-2xl border border-slate-200 text-center hover:shadow-lg hover:border-blue-200 transition-all duration-300 group">
+                <div key={item.title} className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200 text-center hover:shadow-lg hover:border-blue-200 transition-all duration-300 group">
                   <div className="h-14 w-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300">
                     <Icon className="h-7 w-7 text-blue-600" />
                   </div>
@@ -314,7 +314,7 @@ export default async function Home() {
       </section>
 
       {/* Section 6: Target Students */}
-      <section className="py-20 bg-white">
+      <section className="py-12 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Who Should Join?</h2>
@@ -324,7 +324,7 @@ export default async function Home() {
             {targetStudents.map((item) => {
               const Icon = item.icon
               return (
-                <div key={item.title} className="bg-slate-50 p-7 rounded-2xl border border-slate-200 text-center hover:shadow-lg hover:border-blue-200 transition-all duration-300 group">
+                <div key={item.title} className="bg-slate-50 p-5 md:p-7 rounded-2xl border border-slate-200 text-center hover:shadow-lg hover:border-blue-200 transition-all duration-300 group">
                   <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300">
                     <Icon className="h-7 w-7 text-blue-600" />
                   </div>
@@ -338,7 +338,7 @@ export default async function Home() {
       </section>
 
       {/* Section 7: Features */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-12 md:py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">What We Offer</h2>
@@ -361,7 +361,7 @@ export default async function Home() {
       </section>
 
       {/* Section 8: Certificates */}
-      <section className="py-20 bg-white">
+      <section className="py-12 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Certificates You&apos;ll Receive</h2>
@@ -373,7 +373,7 @@ export default async function Home() {
               { title: 'Project Completion Certificate', desc: 'For 2 Live Projects', icon: FileText },
               { title: 'Industrial Training Certificate', desc: 'From Company', icon: Briefcase },
             ].map((c) => (
-              <div key={c.title} className="bg-slate-50 p-7 rounded-2xl border border-slate-200 text-center hover:shadow-lg hover:border-blue-200 transition-all duration-300 group">
+              <div key={c.title} className="bg-slate-50 p-5 md:p-7 rounded-2xl border border-slate-200 text-center hover:shadow-lg hover:border-blue-200 transition-all duration-300 group">
                 <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                   <c.icon className="h-7 w-7 text-blue-600" />
                 </div>
@@ -386,21 +386,21 @@ export default async function Home() {
       </section>
 
       {/* Section 9: Industry Experts */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-12 md:py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Learn From Industry Experts</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">Get mentored by professionals with years of industry experience</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center hover:shadow-lg transition-all duration-300">
+            <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 text-center hover:shadow-lg transition-all duration-300">
               <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Users className="h-7 w-7 text-blue-600" />
               </div>
               <h3 className="font-bold text-slate-900 mb-2">10+ Industry Mentors</h3>
               <p className="text-sm text-slate-500">Learn from experienced professionals</p>
             </div>
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center hover:shadow-lg transition-all duration-300">
+            <div className="bg-white p-5 md:p-8 rounded-2xl border border-slate-200 text-center hover:shadow-lg transition-all duration-300">
               <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <MessageSquare className="h-7 w-7 text-blue-600" />
               </div>
@@ -412,7 +412,7 @@ export default async function Home() {
       </section>
 
       {/* Section 10: Admissions Open */}
-      <section className="relative py-20 bg-gradient-to-r from-blue-600 to-blue-700 overflow-hidden">
+      <section className="relative py-12 md:py-20 bg-gradient-to-r from-blue-600 to-blue-700 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
@@ -436,7 +436,7 @@ export default async function Home() {
 
       {/* Section 11: Testimonials */}
       {testimonials.length > 0 && (
-        <section className="py-20 bg-white">
+        <section className="py-12 md:py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">What Our Students Say</h2>
@@ -444,7 +444,7 @@ export default async function Home() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {testimonials.slice(0, 3).map((t) => (
-                <div key={t.id} className="bg-slate-50 p-7 rounded-2xl border border-slate-200 hover:shadow-lg transition-all duration-300">
+                <div key={t.id} className="bg-slate-50 p-5 md:p-7 rounded-2xl border border-slate-200 hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center gap-1 mb-4">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star key={i} className={`h-4 w-4 ${i < t.rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} />
@@ -468,14 +468,14 @@ export default async function Home() {
       )}
 
       {/* Section 12: Contact / Footer CTA */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-12 md:py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Get In Touch</h2>
             <p className="text-slate-500 max-w-2xl mx-auto">Have questions? We&apos;re here to help you start your journey</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto mb-10">
-            <div className="bg-white p-7 rounded-2xl border border-slate-200 flex items-center gap-4 hover:shadow-lg transition-all duration-300">
+            <div className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200 flex items-center gap-4 hover:shadow-lg transition-all duration-300">
               <div className="h-13 w-13 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0">
                 <Phone className="h-6 w-6 text-blue-600" />
               </div>
@@ -485,7 +485,7 @@ export default async function Home() {
                 <p className="text-sm text-slate-600">8085782471</p>
               </div>
             </div>
-            <div className="bg-white p-7 rounded-2xl border border-slate-200 flex items-center gap-4 hover:shadow-lg transition-all duration-300">
+            <div className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200 flex items-center gap-4 hover:shadow-lg transition-all duration-300">
               <div className="h-13 w-13 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0">
                 <MapPin className="h-6 w-6 text-blue-600" />
               </div>
@@ -502,7 +502,7 @@ export default async function Home() {
       </section>
 
       {/* Section 13: Final CTA */}
-      <section className="relative py-20 bg-gradient-to-r from-slate-900 to-slate-800 overflow-hidden">
+      <section className="relative py-12 md:py-20 bg-gradient-to-r from-slate-900 to-slate-800 overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #2563eb 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Start Your Career?</h2>

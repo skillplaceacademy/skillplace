@@ -133,7 +133,7 @@ export default function AdminCertificatesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Certificate Management</h1>
         <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={handleOpenForm}>
           <Plus className="h-4 w-4" /> Issue Certificate
@@ -143,7 +143,7 @@ export default function AdminCertificatesPage() {
       {showForm && (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900 mb-4">Issue New Certificate</h2>
-          <form onSubmit={handleIssue} className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <form onSubmit={handleIssue} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="student" className="text-slate-700">Student</Label>
               <select
@@ -216,6 +216,7 @@ export default function AdminCertificatesPage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
@@ -263,6 +264,7 @@ export default function AdminCertificatesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

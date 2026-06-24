@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { notify } from '@/lib/notifications'
 import TestCard from '@/components/admin/TestCard'
 import type { Test } from '@/types'
 
@@ -78,6 +79,7 @@ export default function TestsPage() {
         max_attempts: formData.max_attempts,
         time_limit_minutes: formData.time_limit_minutes,
       })
+      notify.testUpdated()
     } else {
       await createRecord('tests', {
         course_id: courseId,
@@ -88,6 +90,7 @@ export default function TestsPage() {
         time_limit_minutes: formData.time_limit_minutes,
         is_active: true,
       })
+      notify.testCreated()
     }
 
     setSaving(false)
@@ -106,6 +109,7 @@ export default function TestsPage() {
       }
     }
     await deleteRecord('tests', deletingTest.id)
+    notify.testDeleted()
     setShowDeleteConfirm(false)
     setDeletingTest(null)
     fetchTests()

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
-import { ShoppingCart, CheckCircle, Loader2, CreditCard, Lock } from 'lucide-react'
+import { notify } from '@/lib/notifications'
+import { ShoppingCart, CheckCircle, Loader2, CreditCard, Lock, AlertCircle } from 'lucide-react'
 
 interface EnrollButtonProps {
   courseId: string
@@ -28,6 +29,7 @@ export default function EnrollButton({
   const [enrolled, setEnrolled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
+  const [error, setError] = useState('')
 
   const finalPrice = discountPrice || price
   const isFree = finalPrice === 0
@@ -55,34 +57,44 @@ export default function EnrollButton({
 
   async function enrollFree() {
     if (!user) {
+      notify.unauthorized()
       router.push('/login?redirectedFrom=/courses/' + courseSlug)
       return
     }
 
     setProcessing(true)
-    const { error } = await supabase.from('enrollments').insert({
+    setError('')
+    const { error: enrollError } = await supabase.from('enrollments').insert({
       user_id: user.id,
       course_id: courseId,
       status: 'active',
       progress_percent: 0,
     })
 
-    if (!error) {
-      setEnrolled(true)
-      window.location.href = `/courses/${courseSlug}/learn`
+    if (enrollError) {
+      setError('Failed to enroll. Please try again.')
+      notify.enrollError()
+      setProcessing(false)
+      return
     }
-    setProcessing(false)
+
+    setEnrolled(true)
+    notify.enrollSuccess(title)
+    window.location.href = `/courses/${courseSlug}/learn`
   }
 
   async function initiatePayment() {
     if (!user) {
+      notify.unauthorized()
       router.push('/login?redirectedFrom=/courses/' + courseSlug)
       return
     }
 
     setProcessing(true)
+    setError('')
 
     try {
+      notify.paymentRedirecting()
       const res = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,17 +103,30 @@ export default function EnrollButton({
 
       const data = await res.json()
 
+      if (!res.ok) {
+        // Show specific error from API
+        if (data.error?.includes('Authentication') || data.error?.includes('BAD_REQUEST')) {
+          throw new Error('Payment gateway not configured. Please contact support.')
+        }
+        throw new Error(data.error || 'Payment initiation failed. Please try again.')
+      }
+
       if (data.free) {
         setEnrolled(true)
+        notify.enrollSuccess(title)
         window.location.href = data.redirectUrl
         return
       }
 
       if (data.success === false && data.orderId) {
         openRazorpayCheckout(data)
+      } else {
+        throw new Error('Unexpected response from payment server')
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Payment error:', err)
+      setError(err.message || 'Something went wrong. Please try again.')
+      notify.paymentError(err.message)
     }
 
     setProcessing(false)
@@ -115,8 +140,10 @@ export default function EnrollButton({
       name: 'Skillplace Academy',
       description: title,
       order_id: data.orderId,
+      image: '/logo.png',
       handler: async function (response: any) {
         setProcessing(true)
+        setError('')
         try {
           const verifyRes = await fetch('/api/payments/verify', {
             method: 'POST',
@@ -132,10 +159,16 @@ export default function EnrollButton({
 
           if (verifyData.success) {
             setEnrolled(true)
+            notify.paymentSuccess()
             window.location.href = verifyData.redirectUrl
+          } else {
+            setError('Payment verification failed. Please contact support.')
+            notify.paymentError('Payment verification failed.')
           }
         } catch (err) {
           console.error('Verification error:', err)
+          setError('Payment verification failed. Please try again.')
+          notify.paymentError('Payment verification failed.')
         }
         setProcessing(false)
       },
@@ -159,9 +192,15 @@ export default function EnrollButton({
       const rzp = new (window as any).Razorpay(options)
       rzp.open()
     }
+    script.onerror = () => {
+      setError('Failed to load payment gateway. Please try again.')
+      notify.paymentError('Failed to load payment gateway.')
+      setProcessing(false)
+    }
     document.body.appendChild(script)
   }
 
+  // Already enrolled
   if (enrolled) {
     return (
       <a href={`/courses/${courseSlug}/learn`}>
@@ -173,6 +212,7 @@ export default function EnrollButton({
     )
   }
 
+  // Loading
   if (loading) {
     return (
       <Button size={size} disabled className="w-full">
@@ -184,6 +224,7 @@ export default function EnrollButton({
 
   return (
     <div className="space-y-3">
+      {/* Price Display */}
       {!isFree && (
         <div className="flex items-center justify-between bg-blue-50 rounded-xl p-4">
           <div>
@@ -208,6 +249,15 @@ export default function EnrollButton({
         </div>
       )}
 
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+          <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {/* Enroll Button */}
       {isFree ? (
         <Button
           size={size}
@@ -238,6 +288,7 @@ export default function EnrollButton({
         </Button>
       )}
 
+      {/* Trust Badges */}
       <div className="flex items-center justify-center gap-4 pt-2">
         <div className="flex items-center gap-1 text-xs text-slate-500">
           <Lock className="h-3 w-3" />

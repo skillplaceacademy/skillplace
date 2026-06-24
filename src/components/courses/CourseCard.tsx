@@ -66,7 +66,7 @@ export default function CourseCard({ course }: CourseCardProps) {
             )}
           </div>
           <Link href={`/courses/${course.slug}`}>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 shadow-sm">View Course</Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 shadow-sm w-full sm:w-auto">View Course</Button>
           </Link>
         </div>
       </div>

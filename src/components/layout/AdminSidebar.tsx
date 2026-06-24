@@ -15,21 +15,35 @@ const links = [
   { href: '/admin-place/certificates', label: 'Certificates', icon: Award, adminOnly: false },
 ]
 
-export default function AdminSidebar({ isAdmin }: { isAdmin?: boolean }) {
+export default function AdminSidebar({ isAdmin, isOpen, onToggle }: { isAdmin?: boolean; isOpen?: boolean; onToggle?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 z-40 flex flex-col">
+    <aside className={cn(
+      "fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 z-40 flex flex-col transition-transform duration-300",
+      "md:translate-x-0",
+      isOpen ? "translate-x-0" : "-translate-x-full"
+    )}>
       <div className="p-6 border-b border-slate-200">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm font-bold">S</span>
-          </div>
-          <div>
-            <span className="text-sm font-bold text-slate-900 block leading-tight">skillplace</span>
-            <span className="text-xs text-blue-600 font-semibold">ADMIN</span>
-          </div>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white text-sm font-bold">S</span>
+            </div>
+            <div>
+              <span className="text-sm font-bold text-slate-900 block leading-tight">skillplace</span>
+              <span className="text-xs text-blue-600 font-semibold">ADMIN</span>
+            </div>
+          </Link>
+          <button 
+            className="md:hidden p-2 rounded-lg hover:bg-slate-100"
+            onClick={onToggle}
+          >
+            <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
       <nav className="flex-1 p-3 space-y-1">
         {links

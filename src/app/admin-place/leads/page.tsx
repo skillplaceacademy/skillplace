@@ -67,6 +67,7 @@ export default function AdminLeadsPage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
@@ -118,6 +119,7 @@ export default function AdminLeadsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

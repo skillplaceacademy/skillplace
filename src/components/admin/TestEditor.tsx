@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, Save, HelpCircle, Clock, Target } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import QuestionEditor from './QuestionEditor'
 import type { Test, TestQuestion } from '@/types'
 
@@ -80,6 +81,7 @@ export default function TestEditor({ courseId, tests, onRefresh }: TestEditorPro
       }).eq('id', editingTest.id)
       testId = editingTest.id
       await supabase.from('test_questions').delete().eq('test_id', testId)
+      notify.testUpdated()
     } else {
       const { data } = await supabase.from('tests').insert({
         course_id: courseId,
@@ -91,6 +93,7 @@ export default function TestEditor({ courseId, tests, onRefresh }: TestEditorPro
         is_active: true,
       }).select().single()
       testId = data?.id
+      notify.testCreated()
     }
 
     if (testId) {
@@ -123,6 +126,7 @@ export default function TestEditor({ courseId, tests, onRefresh }: TestEditorPro
     if (!deletingTest) return
     await supabase.from('test_questions').delete().eq('test_id', deletingTest.id)
     await supabase.from('tests').delete().eq('id', deletingTest.id)
+    notify.testDeleted()
     setShowDeleteConfirm(false)
     setDeletingTest(null)
     onRefresh()

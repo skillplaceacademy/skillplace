@@ -52,7 +52,7 @@ export default function StudentDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Welcome back, Student!</h1>
+      <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6">Welcome back, Student!</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {stats.map((stat) => {

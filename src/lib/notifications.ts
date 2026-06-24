@@ -1,0 +1,53 @@
+import { toast } from 'sonner'
+
+export const notify = {
+  loginSuccess: (name?: string) => toast.success(`Welcome back, ${name || 'Student'}!`),
+  loginError: (msg?: string) => toast.error(msg || 'Login failed. Please check your credentials.'),
+  registerSuccess: () => toast.success('Account created successfully! Please check your email.'),
+  registerError: (msg?: string) => toast.error(msg || 'Registration failed. Please try again.'),
+  logoutSuccess: () => toast.success('Logged out successfully!'),
+
+  enrollSuccess: (courseName?: string) => toast.success(`Successfully enrolled${courseName ? ` in ${courseName}` : ''}!`),
+  enrollError: (msg?: string) => toast.error(msg || 'Enrollment failed. Please try again.'),
+  paymentSuccess: () => toast.success('Payment successful! You now have access to the course.'),
+  paymentError: (msg?: string) => toast.error(msg || 'Payment failed. Please try again.'),
+  paymentCancelled: () => toast.info('Payment cancelled.'),
+  paymentRedirecting: () => toast.info('Redirecting to payment...'),
+
+  lessonComplete: (title?: string) => toast.success(`Lesson completed${title ? `: ${title}` : ''}`),
+  quizSubmitted: (score?: number) => toast.success(`Quiz submitted! Score: ${score}%`),
+  quizFailed: () => toast.error('Quiz not passed. Please try again.'),
+  noteSaved: () => toast.success('Notes saved!'),
+  progressSaved: () => toast.success('Progress saved!'),
+
+  certificateDownloaded: () => toast.success('Certificate downloaded!'),
+  certificateError: () => toast.error('Failed to download certificate.'),
+
+  courseCreated: () => toast.success('Course created successfully!'),
+  courseUpdated: () => toast.success('Course updated!'),
+  courseDeleted: () => toast.success('Course deleted.'),
+  moduleCreated: () => toast.success('Module created!'),
+  moduleUpdated: () => toast.success('Module updated!'),
+  moduleDeleted: () => toast.success('Module deleted.'),
+  lessonCreated: () => toast.success('Lesson created!'),
+  lessonUpdated: () => toast.success('Lesson updated!'),
+  lessonDeleted: () => toast.success('Lesson deleted.'),
+  testCreated: () => toast.success('Test created!'),
+  testUpdated: () => toast.success('Test updated!'),
+  testDeleted: () => toast.success('Test deleted.'),
+  videoUploaded: () => toast.success('Video uploaded successfully!'),
+  employeeAdded: () => toast.success('Employee added!'),
+  employeeUpdated: () => toast.success('Employee updated!'),
+  employeeDeleted: () => toast.success('Employee deleted.'),
+  settingsSaved: () => toast.success('Settings saved!'),
+  statusToggled: (active: boolean) => toast.success(`Status changed to ${active ? 'active' : 'inactive'}.`),
+
+  networkError: () => toast.error('Network error. Please check your connection.'),
+  serverError: () => toast.error('Server error. Please try again later.'),
+  unauthorized: () => toast.error('Please login to continue.'),
+  sessionExpired: () => toast.warning('Session expired. Please login again.'),
+  genericError: (msg?: string) => toast.error(msg || 'Something went wrong. Please try again.'),
+
+  comingSoon: () => toast.info('Coming soon!'),
+  copied: () => toast.success('Copied to clipboard!'),
+}

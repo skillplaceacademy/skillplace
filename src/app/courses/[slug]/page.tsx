@@ -152,7 +152,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl border border-slate-200 p-8">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-8">
               <h2 className="text-2xl font-bold text-slate-900 mb-4">About This Course</h2>
               <p className="text-slate-600 leading-relaxed">
                 {course.description || 'This course is designed to provide hands-on practical training for engineering students and professionals. You will work on real-world projects and gain industry-relevant skills that employers are looking for.'}

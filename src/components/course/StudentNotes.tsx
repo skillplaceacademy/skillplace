@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { StickyNote, Save } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import { cn } from '@/lib/utils'
 import type { UserNote } from '@/types'
 
@@ -65,6 +66,7 @@ export default function StudentNotes({ lessonId, className }: StudentNotesProps)
 
     setSaving(false)
     setSaved(true)
+    notify.noteSaved()
     setTimeout(() => setSaved(false), 2000)
   }, [note, content, lessonId])
 

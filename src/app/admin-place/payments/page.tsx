@@ -65,7 +65,7 @@ export default function AdminPaymentsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Payment Management</h1>
         <Button variant="outline" className="gap-2 border-slate-300 hover:bg-slate-50"><Download className="h-4 w-4" /> Export CSV</Button>
       </div>
@@ -140,6 +140,7 @@ export default function AdminPaymentsPage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
@@ -195,6 +196,7 @@ export default function AdminPaymentsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
