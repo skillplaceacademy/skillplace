@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase/client'
 
-interface Category {
+interface Branch {
   id: string
   name: string
   slug: string
@@ -16,36 +16,36 @@ interface CourseFilterProps {
 }
 
 export default function CourseFilter({ selected, onSelect }: CourseFilterProps) {
-  const [categories, setCategories] = useState<Category[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
 
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchBranches() {
       const { data } = await supabase
-        .from('categories')
+        .from('branches')
         .select('id, name, slug')
         .eq('is_active', true)
-        .order('order_index')
+        .order('name')
 
       if (data) {
-        setCategories([{ id: 'all', name: 'All', slug: 'all' }, ...data])
+        setBranches([{ id: 'all', name: 'All', slug: 'all' }, ...data])
       }
     }
-    fetchCategories()
+    fetchBranches()
   }, [])
 
   return (
     <div className="flex flex-wrap gap-2">
-      {categories.map((cat) => (
+      {branches.map((branch) => (
         <Button
-          key={cat.slug}
-          variant={selected === cat.slug ? 'default' : 'outline'}
+          key={branch.slug}
+          variant={selected === branch.slug ? 'default' : 'outline'}
           size="sm"
           className={cn(
-            selected === cat.slug && 'bg-primary text-primary-foreground'
+            selected === branch.slug && 'bg-primary text-primary-foreground'
           )}
-          onClick={() => onSelect(cat.slug)}
+          onClick={() => onSelect(branch.slug)}
         >
-          {cat.name}
+          {branch.name}
         </Button>
       ))}
     </div>

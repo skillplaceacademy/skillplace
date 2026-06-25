@@ -1,9 +1,11 @@
 import { Badge } from '@/components/ui/badge'
-import { Clock, BarChart3, Users, Play, BookOpen, Award, CheckCircle, ArrowRight, Star } from 'lucide-react'
+import { Clock, BarChart3, Users, Play, BookOpen, Award, CheckCircle, ArrowRight, Star, Laptop } from 'lucide-react'
 import { getCourseBySlug } from '@/lib/supabase/queries'
 import { notFound } from 'next/navigation'
 import { adminSupabase } from '@/lib/supabase/admin'
 import EnrollButton from '@/components/courses/EnrollButton'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,9 +36,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             {/* Course Info */}
             <div className="lg:col-span-2">
               <div className="flex flex-wrap items-center gap-2 mb-5">
-                {course.categories && (
+                {course.branches && (
                   <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                    {course.categories.name}
+                    {course.branches.name}
                   </Badge>
                 )}
                 <Badge className="bg-white/10 text-white border border-white/20">
@@ -227,6 +229,28 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
           </div>
         </div>
       </div>
+
+      {/* Program Enrollment CTA */}
+      <section className="py-12 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
+            <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0">
+              <Laptop className="h-7 w-7 text-blue-600" />
+            </div>
+            <div className="text-center md:text-left flex-1">
+              <h3 className="text-xl font-bold text-slate-900 mb-1">Want to join a full program?</h3>
+              <p className="text-slate-600">
+                This course is part of our comprehensive programs. Get placement support, certifications, and more.
+              </p>
+            </div>
+            <Link href="/programs">
+              <Button className="bg-blue-600 hover:bg-blue-700 gap-1 shrink-0">
+                Explore Programs <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700">

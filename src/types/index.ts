@@ -4,42 +4,118 @@ export interface Profile {
   full_name: string | null
   phone: string | null
   avatar_url: string | null
-  role: 'student' | 'admin' | 'employee'
+  role: 'student' | 'admin'
   is_active: boolean
   created_at: string
   updated_at: string
 }
 
-export interface Category {
+export interface Branch {
   id: string
   name: string
   slug: string
   description: string | null
   icon: string | null
-  order_index: number
   is_active: boolean
   created_at: string
 }
 
 export interface Course {
   id: string
-  category_id: string | null
   title: string
   slug: string
   description: string | null
   short_description: string | null
   thumbnail_url: string | null
-  preview_video_url: string | null
   price: number
   discount_price: number | null
   duration_hours: number | null
   level: 'beginner' | 'intermediate' | 'advanced'
+  branch_id: string | null
   is_featured: boolean
   is_active: boolean
   created_at: string
   updated_at: string
-  category?: Category
-  modules?: Module[]
+  branches?: Branch
+}
+
+export interface TrainingProgram {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  short_description: string | null
+  program_type: 'online' | 'offline' | 'hybrid'
+  branch_id: string | null
+  price: number
+  discount_price: number | null
+  duration_weeks: number | null
+  features: string[] | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  branches?: Branch
+}
+
+export interface ProgramCourse {
+  id: string
+  program_id: string
+  course_id: string
+  order_index: number
+  courses?: Course
+}
+
+export interface Enrollment {
+  id: string
+  user_id: string
+  program_id: string
+  branch_id: string | null
+  status: 'pending' | 'active' | 'completed' | 'cancelled'
+  notes: string | null
+  enrolled_at: string
+  completed_at: string | null
+  training_programs?: TrainingProgram
+  branches?: Branch
+  profiles?: Profile
+}
+
+export interface Purchase {
+  id: string
+  user_id: string
+  course_id: string
+  amount: number
+  currency: string
+  razorpay_order_id: string | null
+  razorpay_payment_id: string | null
+  razorpay_signature: string | null
+  status: 'pending' | 'completed' | 'failed' | 'refunded'
+  created_at: string
+  updated_at: string
+  courses?: Course
+  profiles?: Profile
+}
+
+export interface Testimonial {
+  id: string
+  student_name: string
+  student_photo: string | null
+  course_name: string | null
+  rating: number
+  review: string
+  is_featured: boolean
+  is_active: boolean
+  created_at: string
+}
+
+export interface Lead {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  message: string | null
+  source: string
+  status: 'new' | 'contacted' | 'converted' | 'closed'
+  created_at: string
 }
 
 export interface Module {
@@ -67,6 +143,27 @@ export interface Lesson {
   is_downloadable: boolean
   order_index: number
   is_free: boolean
+}
+
+export interface Certificate {
+  id: string
+  user_id: string
+  course_id: string
+  certificate_number: string
+  issued_at: string
+  pdf_url: string | null
+  course?: Course
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  title: string
+  message: string | null
+  type: string
+  is_read: boolean
+  metadata: Record<string, unknown> | null
+  created_at: string
 }
 
 export interface Test {
@@ -105,26 +202,6 @@ export interface TestAttempt {
   completed_at: string | null
 }
 
-export interface Enrollment {
-  id: string
-  user_id: string
-  course_id: string
-  status: 'active' | 'completed' | 'expired'
-  progress_percent: number
-  enrolled_at: string
-  completed_at: string | null
-  course?: Course
-}
-
-export interface CourseProgress {
-  id: string
-  user_id: string
-  course_id: string
-  lesson_id: string
-  completed: boolean
-  completed_at: string | null
-}
-
 export interface UserNote {
   id: string
   user_id: string
@@ -134,50 +211,24 @@ export interface UserNote {
   updated_at: string
 }
 
-export interface Certificate {
-  id: string
-  user_id: string
-  course_id: string
-  certificate_number: string
-  issued_at: string
-  pdf_url: string | null
-  course?: Course
-}
-
-export interface Notification {
-  id: string
-  user_id: string
-  title: string
-  message: string | null
-  type: string
-  is_read: boolean
-  metadata: Record<string, unknown> | null
-  created_at: string
-}
-
-export interface Lead {
+export interface Category {
   id: string
   name: string
-  email: string
-  phone: string | null
-  message: string | null
-  source: string
-  status: 'new' | 'contacted' | 'converted' | 'closed'
+  slug: string
+  description: string | null
+  icon: string | null
+  order_index: number
+  is_active: boolean
   created_at: string
 }
 
-export interface Payment {
+export interface CourseProgress {
   id: string
   user_id: string
   course_id: string
-  amount: number
-  currency: string
-  razorpay_order_id: string | null
-  razorpay_payment_id: string | null
-  razorpay_signature: string | null
-  status: 'pending' | 'completed' | 'failed' | 'refunded'
-  created_at: string
-  updated_at: string
+  lesson_id: string
+  completed: boolean
+  completed_at: string | null
 }
 
 export interface StudentProject {
@@ -192,14 +243,29 @@ export interface StudentProject {
   created_at: string
 }
 
-export interface Testimonial {
+export interface Employee {
   id: string
-  student_name: string
-  student_photo: string | null
-  course_name: string | null
-  rating: number
-  review: string
-  is_featured: boolean
+  name: string
+  email: string
+  phone: string | null
+  role: 'admin' | 'instructor' | 'counselor' | 'support'
+  department: string | null
+  bio: string | null
+  photo_url: string | null
   is_active: boolean
   created_at: string
+  employee_permissions?: EmployeePermission
+}
+
+export interface EmployeePermission {
+  id: string
+  employee_id: string
+  can_manage_courses: boolean
+  can_manage_programs: boolean
+  can_manage_enrollments: boolean
+  can_manage_students: boolean
+  can_manage_content: boolean
+  can_manage_payments: boolean
+  can_manage_leads: boolean
+  can_manage_employees: boolean
 }

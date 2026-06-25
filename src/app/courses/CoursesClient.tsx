@@ -4,16 +4,22 @@ import { useState } from 'react'
 import { Search } from 'lucide-react'
 import CourseCard from '@/components/courses/CourseCard'
 import PurchasedCourses from '@/components/courses/PurchasedCourses'
-import type { Course, Category } from '@/types'
+import type { Course } from '@/types'
+
+interface Branch {
+  id: string
+  name: string
+  slug: string
+}
 
 interface CoursesClientProps {
   courses: Course[]
-  categories: Category[]
+  categories: Branch[]
 }
 
 export default function CoursesClient({ courses, categories }: CoursesClientProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
@@ -22,10 +28,10 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
       (course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       (course.short_description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
 
-    const matchesCategory =
-      selectedCategory === null || (course as any).categories?.id === selectedCategory
+    const matchesBranch =
+      selectedBranch === null || (course as any).branches?.id === selectedBranch
 
-    return matchesSearch && matchesCategory
+    return matchesSearch && matchesBranch
   })
 
   return (
@@ -46,7 +52,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="space-y-10">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">My Enrolled Courses</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-4">My Purchased Courses</h2>
             <PurchasedCourses />
           </div>
 
@@ -64,26 +70,26 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
 
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <button
-                onClick={() => setSelectedCategory(null)}
+                onClick={() => setSelectedBranch(null)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                  selectedCategory === null
+                  selectedBranch === null
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 All
               </button>
-              {categories.map((category) => (
+              {categories.map((branch) => (
                 <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
+                  key={branch.id}
+                  onClick={() => setSelectedBranch(branch.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                    selectedCategory === category.id
+                    selectedBranch === branch.id
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {category.name}
+                  {branch.name}
                 </button>
               ))}
             </div>

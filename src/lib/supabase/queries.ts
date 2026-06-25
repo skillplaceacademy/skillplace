@@ -1,28 +1,28 @@
 import { adminSupabase } from './admin'
 
-export async function getCategories() {
+export async function getBranches() {
   const { data, error } = await adminSupabase
-    .from('categories')
+    .from('branches')
     .select('*')
     .eq('is_active', true)
-    .order('order_index', { ascending: true })
+    .order('name', { ascending: true })
 
   if (error) {
-    console.error('Error fetching categories:', error)
+    console.error('Error fetching branches:', error)
     return []
   }
   return data || []
 }
 
-export async function getCourses(categoryId?: string) {
+export async function getCourses(branchId?: string) {
   let query = adminSupabase
     .from('courses')
-    .select('*, categories(*)')
+    .select('*, branches(*)')
     .eq('is_active', true)
     .order('created_at', { ascending: true })
 
-  if (categoryId) {
-    query = query.eq('category_id', categoryId)
+  if (branchId) {
+    query = query.eq('branch_id', branchId)
   }
 
   const { data, error } = await query
@@ -37,7 +37,7 @@ export async function getCourses(categoryId?: string) {
 export async function getCourseBySlug(slug: string) {
   const { data, error } = await adminSupabase
     .from('courses')
-    .select('*, categories(*)')
+    .select('*, branches(*)')
     .eq('slug', slug)
     .single()
 
@@ -46,6 +46,34 @@ export async function getCourseBySlug(slug: string) {
     return null
   }
   return data
+}
+
+export async function getTrainingPrograms() {
+  const { data, error } = await adminSupabase
+    .from('training_programs')
+    .select('*, branches(*)')
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching training programs:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function getProgramCourses(programId: string) {
+  const { data, error } = await adminSupabase
+    .from('program_courses')
+    .select('*, courses(*)')
+    .eq('program_id', programId)
+    .order('order_index', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching program courses:', error)
+    return []
+  }
+  return data || []
 }
 
 export async function getTestimonials() {
@@ -78,7 +106,7 @@ export async function getLeads() {
 export async function getStudents() {
   const { data, error } = await adminSupabase
     .from('profiles')
-    .select('*, enrollments(*)')
+    .select('*')
     .eq('role', 'student')
     .order('created_at', { ascending: false })
 
@@ -91,7 +119,7 @@ export async function getStudents() {
 
 export async function getPayments() {
   const { data, error } = await adminSupabase
-    .from('payments')
+    .from('purchases')
     .select('*, profiles(*), courses(*)')
     .order('created_at', { ascending: false })
 
@@ -102,47 +130,31 @@ export async function getPayments() {
   return data || []
 }
 
-export async function getCertificates() {
-  const { data, error } = await adminSupabase
-    .from('certificates')
-    .select('*, profiles(*), courses(*)')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching certificates:', error)
-    return []
-  }
-  return data || []
-}
-
 export async function getDashboardStats() {
-  const [studentsRes, coursesRes, paymentsRes, leadsRes, employeesRes] = await Promise.all([
+  const [studentsRes, coursesRes, purchasesRes, leadsRes] = await Promise.all([
     adminSupabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'student'),
     adminSupabase.from('courses').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    adminSupabase.from('payments').select('amount').eq('status', 'completed'),
+    adminSupabase.from('purchases').select('amount').eq('status', 'completed'),
     adminSupabase.from('leads').select('id', { count: 'exact', head: true }).eq('status', 'new'),
-    adminSupabase.from('profiles').select('id', { count: 'exact', head: true }).in('role', ['admin', 'employee']),
   ])
 
   const totalStudents = studentsRes.count || 0
   const activeCourses = coursesRes.count || 0
-  const totalRevenue = paymentsRes.data?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0
+  const totalRevenue = purchasesRes.data?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0
   const newLeads = leadsRes.count || 0
-  const totalEmployees = employeesRes.count || 0
 
   return {
     totalStudents,
     activeCourses,
     totalRevenue,
     newLeads,
-    totalEmployees,
   }
 }
 
 export async function getRecentEnrollments() {
   const { data, error } = await adminSupabase
     .from('enrollments')
-    .select('*, courses(title), profiles(full_name)')
+    .select('*, training_programs(name), profiles(full_name)')
     .order('enrolled_at', { ascending: false })
     .limit(5)
 
@@ -155,7 +167,7 @@ export async function getRecentEnrollments() {
 
 export async function getRecentPayments() {
   const { data, error } = await adminSupabase
-    .from('payments')
+    .from('purchases')
     .select('*, profiles(full_name)')
     .order('created_at', { ascending: false })
     .limit(5)
@@ -170,7 +182,7 @@ export async function getRecentPayments() {
 export async function getStudentEnrollments(userId: string) {
   const { data, error } = await adminSupabase
     .from('enrollments')
-    .select('*, courses(title, slug, thumbnail_url)')
+    .select('*, training_programs(name, slug)')
     .eq('user_id', userId)
     .order('enrolled_at', { ascending: false })
 
@@ -181,57 +193,15 @@ export async function getStudentEnrollments(userId: string) {
   return data || []
 }
 
-export async function getStudentCertificates(userId: string) {
+export async function getStudentPurchases(userId: string) {
   const { data, error } = await adminSupabase
-    .from('certificates')
-    .select('*, courses(title)')
-    .eq('user_id', userId)
-    .order('issued_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching student certificates:', error)
-    return []
-  }
-  return data || []
-}
-
-export async function getStudentTests(userId: string) {
-  const { data, error } = await adminSupabase
-    .from('tests')
-    .select('*, courses(title), test_attempts(*)')
-    .eq('is_active', true)
-
-  if (error) {
-    console.error('Error fetching student tests:', error)
-    return []
-  }
-  return data || []
-}
-
-export async function getStudentNotifications(userId: string) {
-  const { data, error } = await adminSupabase
-    .from('notifications')
-    .select('*')
+    .from('purchases')
+    .select('*, courses(title, slug, thumbnail_url)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(5)
 
   if (error) {
-    console.error('Error fetching student notifications:', error)
-    return []
-  }
-  return data || []
-}
-
-export async function getApprovedProjects() {
-  const { data, error } = await adminSupabase
-    .from('student_projects')
-    .select('*, profiles(full_name), courses(title)')
-    .eq('is_approved', true)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching approved projects:', error)
+    console.error('Error fetching student purchases:', error)
     return []
   }
   return data || []

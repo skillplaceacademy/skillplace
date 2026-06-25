@@ -4,27 +4,33 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Search, Plus, Edit, Trash2, X } from 'lucide-react'
-import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 
 interface Course {
   id: string
   title: string
   slug: string
+  description: string
+  short_description: string
   price: number
+  discount_price: number | null
+  duration_hours: number | null
+  level: string
+  branch_id: string | null
   is_active: boolean
-  category_id: string | null
-  categories: { name: string } | null
+  branches?: { name: string } | null
 }
 
-interface Category {
+interface Branch {
   id: string
   name: string
+  slug: string
 }
 
 export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -37,8 +43,8 @@ export default function AdminCoursesPage() {
     price: 0,
     discount_price: 0,
     duration_hours: 0,
-    level: 'beginner' as string,
-    category_id: '',
+    level: 'beginner',
+    branch_id: '',
     is_active: true,
   })
 
@@ -48,12 +54,12 @@ export default function AdminCoursesPage() {
 
   async function fetchData() {
     setLoading(true)
-    const [coursesData, categoriesData] = await Promise.all([
-      getRecords('courses'),
-      getRecords('categories'),
+    const [coursesData, branchesData] = await Promise.all([
+      getRecords('courses', undefined, undefined, 'branches(name)'),
+      getRecords('branches'),
     ])
     setCourses((coursesData || []).sort((a: Course, b: Course) => (a as any).created_at?.localeCompare((b as any).created_at) || 0))
-    setCategories((categoriesData || []).filter((c: Category) => (c as any).is_active !== false))
+    setBranches((branchesData || []).filter((b: Branch) => (b as any).is_active !== false))
     setLoading(false)
   }
 
@@ -84,13 +90,13 @@ export default function AdminCoursesPage() {
     setFormData({
       title: course.title,
       slug: course.slug,
-      description: '',
-      short_description: '',
+      description: course.description || '',
+      short_description: course.short_description || '',
       price: course.price,
-      discount_price: 0,
-      duration_hours: 0,
-      level: 'beginner',
-      category_id: course.category_id || '',
+      discount_price: course.discount_price || 0,
+      duration_hours: course.duration_hours || 0,
+      level: course.level || 'beginner',
+      branch_id: course.branch_id || '',
       is_active: course.is_active,
     })
     setShowForm(true)
@@ -106,13 +112,13 @@ export default function AdminCoursesPage() {
       discount_price: 0,
       duration_hours: 0,
       level: 'beginner',
-      category_id: '',
+      branch_id: '',
       is_active: true,
     })
   }
 
   const filteredCourses = courses.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase())
+    (c.title || '').toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -160,6 +166,23 @@ export default function AdminCoursesPage() {
                 required
               />
             </div>
+            <div className="sm:col-span-2">
+              <label className="text-sm font-medium text-slate-700">Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={2}
+                className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-sm font-medium text-slate-700">Short Description</label>
+              <Input
+                value={formData.short_description}
+                onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
+                className="border-slate-300"
+              />
+            </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Price (₹)</label>
               <Input
@@ -201,15 +224,15 @@ export default function AdminCoursesPage() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Category</label>
+              <label className="text-sm font-medium text-slate-700">Branch</label>
               <select
-                value={formData.category_id}
-                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                value={formData.branch_id}
+                onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
                 className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <option value="">Select Branch</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
             </div>
@@ -240,8 +263,9 @@ export default function AdminCoursesPage() {
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
               <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Title</th>
-              <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Category</th>
+              <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Branch</th>
               <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Price</th>
+              <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Duration</th>
               <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Status</th>
               <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Actions</th>
             </tr>
@@ -249,18 +273,22 @@ export default function AdminCoursesPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center text-slate-500">Loading...</td>
+                <td colSpan={6} className="px-5 py-12 text-center text-slate-500">Loading...</td>
               </tr>
             ) : filteredCourses.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center text-slate-500">No courses found.</td>
+                <td colSpan={6} className="px-5 py-12 text-center text-slate-500">No courses found.</td>
               </tr>
             ) : (
               filteredCourses.map((course) => (
                 <tr key={course.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                  <td className="px-5 py-3.5 text-sm font-medium text-slate-900">{course.title}</td>
-                  <td className="px-5 py-3.5 text-sm text-slate-500">{course.categories?.name || 'N/A'}</td>
+                  <td className="px-5 py-3.5">
+                    <p className="text-sm font-medium text-slate-900">{course.title}</p>
+                    <p className="text-xs text-slate-500">{course.level}</p>
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{course.branches?.name || 'N/A'}</td>
                   <td className="px-5 py-3.5 text-sm font-medium text-slate-900">₹{course.price}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600">{course.duration_hours ? `${course.duration_hours}h` : 'N/A'}</td>
                   <td className="px-5 py-3.5">
                     <Badge variant={course.is_active ? 'default' : 'secondary'} className={course.is_active ? 'bg-green-100 text-green-700 border-0' : 'bg-slate-100 text-slate-600 border-0'}>
                       {course.is_active ? 'active' : 'inactive'}

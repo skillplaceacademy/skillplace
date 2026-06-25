@@ -41,7 +41,7 @@ export default function AdminLayout({
         .eq('id', user.id)
         .single()
 
-      if (profile && (profile.role === 'admin' || profile.role === 'employee')) {
+      if (profile && profile.role === 'admin') {
         setAdminUser(profile)
       }
 
@@ -93,7 +93,6 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/30 z-40 md:hidden" 
@@ -101,7 +100,7 @@ export default function AdminLayout({
         />
       )}
       <AdminSidebar isAdmin={adminUser.role === 'admin'} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-      <main className="flex-1 p-4 md:p-6 md:ml-64">
+      <main className="flex-1 p-4 md:p-6 min-h-screen">
         <div className="flex items-center justify-between gap-4 mb-4">
           <button 
             className="md:hidden p-2 rounded-lg hover:bg-slate-100"

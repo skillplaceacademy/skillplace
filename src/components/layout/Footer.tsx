@@ -6,40 +6,39 @@ import { supabase } from '@/lib/supabase/client'
 
 const quickLinks = [
   { href: '/courses', label: 'Courses' },
+  { href: '/programs', label: 'Programs' },
   { href: '/about', label: 'About Us' },
   { href: '/contact', label: 'Contact' },
   { href: '/placements', label: 'Placements' },
-  { href: '/projects', label: 'Student Projects' },
 ]
 
-interface Category {
+interface Branch {
   name: string
   slug: string
 }
 
 export default function Footer() {
-  const [categories, setCategories] = useState<Category[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
 
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchBranches() {
       const { data } = await supabase
-        .from('categories')
+        .from('branches')
         .select('name, slug')
         .eq('is_active', true)
-        .order('order_index')
+        .order('name')
 
       if (data) {
-        setCategories(data)
+        setBranches(data)
       }
     }
-    fetchCategories()
+    fetchBranches()
   }, [])
 
   return (
     <footer className="bg-slate-900 text-slate-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Brand Column */}
           <div>
             <div className="flex items-center gap-2.5 mb-5">
               <div className="h-9 w-9 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -63,12 +62,11 @@ export default function Footer() {
               </a>
               <div className="flex items-center gap-2 text-sm text-slate-400">
                 <MapPin className="h-4 w-4 text-blue-400" />
-                Mumbai, Maharashtra, India
+                Bilaspur, Chhattisgarh
               </div>
             </div>
           </div>
 
-          {/* Quick Links */}
           <div>
             <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Quick Links</h3>
             <ul className="space-y-3">
@@ -83,18 +81,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Categories */}
           <div>
-            <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Categories</h3>
+            <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Branches</h3>
             <ul className="space-y-3">
-              {categories.length === 0 ? (
+              {branches.length === 0 ? (
                 <li className="text-sm text-slate-500">Loading...</li>
               ) : (
-                categories.map((cat) => (
-                  <li key={cat.slug}>
-                    <Link href={`/courses?category=${cat.slug}`} className="text-sm text-slate-400 hover:text-white hover:pl-1 transition-all duration-200 inline-flex items-center gap-1 group">
+                branches.map((branch) => (
+                  <li key={branch.slug}>
+                    <Link href="/courses" className="text-sm text-slate-400 hover:text-white hover:pl-1 transition-all duration-200 inline-flex items-center gap-1 group">
                       <ArrowRight className="h-3 w-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
-                      {cat.name}
+                      {branch.name}
                     </Link>
                   </li>
                 ))
@@ -102,7 +99,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
           <div>
             <h3 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">Contact Info</h3>
             <div className="space-y-4">
@@ -120,7 +116,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom Bar */}
       <div className="border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">

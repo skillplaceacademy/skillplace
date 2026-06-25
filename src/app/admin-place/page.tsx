@@ -1,4 +1,4 @@
-import { Users, BookOpen, CreditCard, MessageSquare, TrendingUp, UserCog } from 'lucide-react'
+import { Users, BookOpen, CreditCard, MessageSquare, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getDashboardStats, getRecentEnrollments, getRecentPayments } from '@/lib/supabase/queries'
 
@@ -15,7 +15,6 @@ export default async function AdminDashboard() {
     { title: 'Total Students', value: stats.totalStudents.toLocaleString(), icon: Users, color: 'bg-blue-50 text-blue-600', trend: '+12%' },
     { title: 'Active Courses', value: stats.activeCourses.toString(), icon: BookOpen, color: 'bg-green-50 text-green-600', trend: '+3%' },
     { title: 'Total Revenue', value: `₹${(stats.totalRevenue / 100).toLocaleString()}`, icon: CreditCard, color: 'bg-purple-50 text-purple-600', trend: '+8%' },
-    { title: 'Total Employees', value: stats.totalEmployees.toLocaleString(), icon: UserCog, color: 'bg-indigo-50 text-indigo-600', trend: '' },
     { title: 'New Leads', value: stats.newLeads.toString(), icon: MessageSquare, color: 'bg-orange-50 text-orange-600', trend: '+15%' },
   ]
 
@@ -23,7 +22,7 @@ export default async function AdminDashboard() {
     <div>
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Admin Dashboard</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((stat) => {
           const Icon = stat.icon
           return (
@@ -68,7 +67,7 @@ export default async function AdminDashboard() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-900">{(e.profiles as any)?.full_name || 'Unknown'}</p>
-                        <p className="text-xs text-slate-500">{(e.courses as any)?.title || 'Unknown Course'}</p>
+                        <p className="text-xs text-slate-500">{(e.training_programs as any)?.name || 'Unknown Program'}</p>
                       </div>
                     </div>
                     <div className="text-right">

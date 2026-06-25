@@ -21,6 +21,7 @@ export const notify = {
   progressSaved: () => toast.success('Progress saved!'),
 
   certificateDownloaded: () => toast.success('Certificate downloaded!'),
+  certificatesIssued: (count: number) => toast.success(`${count} certificate${count !== 1 ? 's' : ''} issued!`),
   certificateError: () => toast.error('Failed to download certificate.'),
 
   courseCreated: () => toast.success('Course created successfully!'),
@@ -41,6 +42,18 @@ export const notify = {
   employeeDeleted: () => toast.success('Employee deleted.'),
   settingsSaved: () => toast.success('Settings saved!'),
   statusToggled: (active: boolean) => toast.success(`Status changed to ${active ? 'active' : 'inactive'}.`),
+
+  studentAdded: () => toast.success('Student added!'),
+  studentUpdated: () => toast.success('Student updated!'),
+  studentDeleted: () => toast.success('Student deleted.'),
+  studentsImported: (count: number) => toast.success(`${count} student${count !== 1 ? 's' : ''} imported!`),
+  studentsAssignedToBatch: (count: number) => toast.success(`${count} student${count !== 1 ? 's' : ''} assigned to batch!`),
+  studentsDeleted: (count: number) => toast.success(`${count} student${count !== 1 ? 's' : ''} deleted!`),
+
+  batchCreated: () => toast.success('Batch created!'),
+  batchUpdated: () => toast.success('Batch updated!'),
+  batchDeleted: () => toast.success('Batch deleted.'),
+  batchStudentsLoaded: () => toast.success('Batch students loaded.'),
 
   networkError: () => toast.error('Network error. Please check your connection.'),
   serverError: () => toast.error('Server error. Please try again later.'),
