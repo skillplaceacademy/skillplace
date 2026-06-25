@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         } else { current += ch }
       }
       if (current.trim()) parts.push(current.trim())
-      selectStr = parts.map(t => t === '*' ? t : t.includes('(') ? t : `${t}(*)`).join(',')
+      selectStr = '*' + ',' + parts.map(t => t === '*' ? t : t.includes('(') ? t : `${t}(*)`).join(',')
     }
 
     let query: any = adminSupabase.from(table!).select(selectStr)

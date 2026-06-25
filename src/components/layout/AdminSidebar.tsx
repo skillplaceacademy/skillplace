@@ -10,6 +10,7 @@ const links = [
   { href: '/admin-place/programs', label: 'Programs', icon: Briefcase },
   { href: '/admin-place/content', label: 'Content', icon: FileText },
   { href: '/admin-place/enrollments', label: 'Enrollments', icon: GraduationCap },
+  { href: '/admin-place/placements', label: 'Placements', icon: GraduationCap },
   { href: '/admin-place/students', label: 'Students', icon: Users },
   { href: '/admin-place/employees', label: 'Employees', icon: UserCog },
   { href: '/admin-place/leads', label: 'Leads', icon: MessageSquare },

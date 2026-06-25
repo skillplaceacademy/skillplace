@@ -66,12 +66,17 @@ export default function BatchDetailPage() {
   async function fetchBatchData() {
     setLoading(true)
     try {
-      const batchData = await getRecords('batches', 'id', batchId, '*, courses(title)')
+      const batchData = await getRecords('batches', 'id', batchId)
       if (batchData && batchData.length > 0) {
-        setBatch(batchData[0])
+        const batch = batchData[0]
+        if (batch.course_id) {
+          const courseData = await getRecords('courses', 'id', batch.course_id, 'title')
+          batch.courses = courseData?.[0] ? { title: courseData[0].title } : null
+        }
+        setBatch(batch)
       }
 
-      const studentData = await getRecords('profiles', 'batch_id', batchId, '*, enrollments(*, courses(title))')
+      const studentData = await getRecords('profiles', 'batch_id', batchId, '*,enrollments(*,training_programs(*))')
       if (studentData) {
         setStudents(studentData.filter((s: any) => s.role === 'student'))
       }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -160,75 +160,77 @@ export default function AdminEnrollmentsPage() {
                 </tr>
               ) : (
                 filteredEnrollments.map((enrollment) => (
-                  <tr key={enrollment.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">{enrollment.profiles?.full_name || 'N/A'}</p>
-                        <p className="text-xs text-slate-500">{enrollment.profiles?.email}</p>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-slate-900">{enrollment.training_programs?.name || 'N/A'}</td>
-                    <td className="px-5 py-3.5">
-                      <Badge className={
-                        enrollment.training_programs?.program_type === 'offline' ? 'bg-blue-100 text-blue-700 border-0' :
-                        enrollment.training_programs?.program_type === 'online' ? 'bg-purple-100 text-purple-700 border-0' :
-                        'bg-amber-100 text-amber-700 border-0'
-                      }>
-                        {enrollment.training_programs?.program_type || 'N/A'}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-slate-600">{enrollment.branches?.name || 'N/A'}</td>
-                    <td className="px-5 py-3.5">
-                      <Badge className={
-                        enrollment.status === 'active' ? 'bg-green-100 text-green-700 border-0' :
-                        enrollment.status === 'completed' ? 'bg-blue-100 text-blue-700 border-0' :
-                        enrollment.status === 'cancelled' ? 'bg-red-100 text-red-700 border-0' :
-                        'bg-amber-100 text-amber-700 border-0'
-                      }>
-                        {enrollment.status}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-slate-500">
-                      {new Date(enrollment.enrolled_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1">
-                        {enrollment.status === 'pending' && (
-                          <>
+                  <React.Fragment key={enrollment.id}>
+                    <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{enrollment.profiles?.full_name || 'N/A'}</p>
+                          <p className="text-xs text-slate-500">{enrollment.profiles?.email}</p>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-slate-900">{enrollment.training_programs?.name || 'N/A'}</td>
+                      <td className="px-5 py-3.5">
+                        <Badge className={
+                          enrollment.training_programs?.program_type === 'offline' ? 'bg-blue-100 text-blue-700 border-0' :
+                          enrollment.training_programs?.program_type === 'online' ? 'bg-purple-100 text-purple-700 border-0' :
+                          'bg-amber-100 text-amber-700 border-0'
+                        }>
+                          {enrollment.training_programs?.program_type || 'N/A'}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600">{enrollment.branches?.name || 'N/A'}</td>
+                      <td className="px-5 py-3.5">
+                        <Badge className={
+                          enrollment.status === 'active' ? 'bg-green-100 text-green-700 border-0' :
+                          enrollment.status === 'completed' ? 'bg-blue-100 text-blue-700 border-0' :
+                          enrollment.status === 'cancelled' ? 'bg-red-100 text-red-700 border-0' :
+                          'bg-amber-100 text-amber-700 border-0'
+                        }>
+                          {enrollment.status}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-slate-500">
+                        {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-1">
+                          {enrollment.status === 'pending' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateStatus(enrollment.id, 'active')}
+                                className="hover:bg-green-50 hover:text-green-600"
+                                title="Approve"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateStatus(enrollment.id, 'cancelled')}
+                                className="hover:bg-red-50 hover:text-red-600"
+                                title="Reject"
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {enrollment.status === 'active' && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => updateStatus(enrollment.id, 'active')}
-                              className="hover:bg-green-50 hover:text-green-600"
-                              title="Approve"
+                              onClick={() => updateStatus(enrollment.id, 'completed')}
+                              className="hover:bg-blue-50 hover:text-blue-600"
+                              title="Mark Complete"
                             >
                               <CheckCircle className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => updateStatus(enrollment.id, 'cancelled')}
-                              className="hover:bg-red-50 hover:text-red-600"
-                              title="Reject"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                        {enrollment.status === 'active' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateStatus(enrollment.id, 'completed')}
-                            className="hover:bg-blue-50 hover:text-blue-600"
-                            title="Mark Complete"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 ))
               )}
             </tbody>

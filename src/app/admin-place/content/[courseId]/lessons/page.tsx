@@ -57,7 +57,7 @@ export default function LessonsPage() {
   const fetchModules = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await getRecords('modules', 'course_id', courseId)
+      const data = await getRecords('modules', 'course_id', courseId, '*,lessons(*)')
 
       if (data) {
         const sorted = [...data]

@@ -49,7 +49,7 @@ export default function ModulesPage() {
     try {
       setLoading(true)
       setError(null)
-      const data = await getRecords('modules', 'course_id', courseId, 'lessons(*)')
+      const data = await getRecords('modules', 'course_id', courseId, '*,lessons(*)')
       if (data) {
         const sorted = [...data].sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
         setModules(sorted)

@@ -61,6 +61,10 @@ export const notify = {
   sessionExpired: () => toast.warning('Session expired. Please login again.'),
   genericError: (msg?: string) => toast.error(msg || 'Something went wrong. Please try again.'),
 
+  testimonialCreated: () => toast.success('Testimonial created!'),
+  testimonialUpdated: () => toast.success('Testimonial updated!'),
+  testimonialDeleted: () => toast.success('Testimonial deleted.'),
+
   comingSoon: () => toast.info('Coming soon!'),
   copied: () => toast.success('Copied to clipboard!'),
 }
