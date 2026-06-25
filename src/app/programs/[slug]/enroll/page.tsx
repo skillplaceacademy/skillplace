@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Check, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, ChevronLeft, Loader2, CreditCard, Shield, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { getRecords } from '@/lib/admin-api'
+import { supabase } from '@/lib/supabase/client'
 
 interface ProgramInfo {
   id: string
@@ -36,6 +37,14 @@ interface FormData {
   acceptTerms: boolean
 }
 
+type Step = 'info' | 'payment' | 'success' | 'failure'
+
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => { open: () => void }
+  }
+}
+
 export default function EnrollPage() {
   const params = useParams()
   const router = useRouter()
@@ -43,7 +52,7 @@ export default function EnrollPage() {
   const [program, setProgram] = useState<ProgramInfo | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState<Step>('info')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState<FormData>({
@@ -56,20 +65,66 @@ export default function EnrollPage() {
   })
 
   useEffect(() => {
+    fetchUserProfile()
     fetchProgram()
   }, [slug])
+
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    document.body.appendChild(script)
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [])
+
+  async function fetchUserProfile() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email, phone')
+          .eq('id', user.id)
+          .single()
+
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            fullName: profile.full_name || prev.fullName,
+            email: profile.email || prev.email,
+            phone: profile.phone || prev.phone,
+          }))
+        } else {
+          // Fallback to auth user email if no profile
+          if (user.email) {
+            setFormData(prev => ({
+              ...prev,
+              email: user.email || prev.email,
+            }))
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err)
+    }
+  }
 
   async function fetchProgram() {
     setLoading(true)
     try {
       const programs = await getRecords('training_programs', 'slug', slug, 'branches(*)')
-      if (!programs || programs.length === 0) { setLoading(false); return }
+      if (!programs || programs.length === 0) {
+        setLoading(false)
+        return
+      }
       const prog = programs[0]
       setProgram(prog)
 
       try {
         const programCourses = await getRecords('program_courses', 'program_id', prog.id, 'courses(id,title)')
-        setCourses((programCourses || []).map((pc: any) => pc.courses).filter(Boolean))
+        setCourses((programCourses || []).map((pc: { courses: Course }) => pc.courses).filter(Boolean))
       } catch (e) {
         console.error('Failed to fetch courses:', e)
         setCourses([])
@@ -85,52 +140,114 @@ export default function EnrollPage() {
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
-  async function handleSubmit() {
-    if (!formData.acceptTerms) {
-      setError('Please accept the terms and conditions')
-      return
-    }
-
+  const openRazorpay = useCallback(async () => {
+    if (!program) return
     setSubmitting(true)
     setError('')
 
     try {
-      const res = await fetch('/api/programs/enroll', {
+      // Create order
+      const orderRes = await fetch('/api/programs/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: formData.fullName,
+          programId: program.id,
+          programName: program.name,
+          studentName: formData.fullName,
           email: formData.email,
           phone: formData.phone,
-          location: formData.location,
-          program_type: slug,
-          notes: formData.notes,
         }),
       })
 
-      const data = await res.json()
+      const orderData = await orderRes.json()
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit enrollment')
+      if (!orderRes.ok) {
+        throw new Error(orderData.error || 'Failed to create payment order')
       }
 
-      toast.success('Enrollment application submitted successfully!')
-      router.push('/courses')
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Skillplace Academy',
+        description: `Enrollment - ${program.name}`,
+        order_id: orderData.orderId,
+        handler: async function (response: {
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          razorpay_signature: string
+        }) {
+          try {
+            const verifyRes = await fetch('/api/programs/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                programId: program.id,
+                studentName: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+                location: formData.location,
+                notes: formData.notes,
+              }),
+            })
+
+            const verifyData = await verifyRes.json()
+
+            if (verifyData.success) {
+              setStep('success')
+              toast.success('Payment successful! Enrollment confirmed.')
+            } else {
+              setStep('failure')
+              setError(verifyData.error || 'Payment verification failed')
+            }
+          } catch {
+            setStep('failure')
+            setError('Payment verification failed. Please contact support.')
+          } finally {
+            setSubmitting(false)
+          }
+        },
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#2563eb',
+        },
+        modal: {
+          ondismiss: function () {
+            setStep('failure')
+            setError('Payment was cancelled. You can retry when ready.')
+            setSubmitting(false)
+          },
+        },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to initiate payment')
       setSubmitting(false)
     }
-  }
+  }, [program, formData])
 
   function canProceed() {
-    if (step === 0) {
-      return formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phone.trim() !== ''
-    }
-    return true
+    return formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phone.trim() !== ''
   }
 
-  const steps = ['Personal Info', 'Review & Submit']
+  const stepConfig = {
+    info: { index: 0, label: 'Personal Info' },
+    payment: { index: 1, label: 'Payment' },
+    success: { index: 2, label: 'Complete' },
+    failure: { index: 2, label: 'Complete' },
+  }
+
+  const steps = ['Personal Info', 'Payment', 'Complete']
+  const currentStepIndex = stepConfig[step].index
 
   if (loading) {
     return (
@@ -203,33 +320,41 @@ export default function EnrollPage() {
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8">
               <h1 className="text-2xl font-bold text-slate-900 mb-2">Enroll in {program.name}</h1>
-              <p className="text-slate-500 mb-6">Complete the form below to apply</p>
+              <p className="text-slate-500 mb-6">
+                {step === 'info' && 'Complete the form below to proceed'}
+                {step === 'payment' && 'Review and complete your payment'}
+                {(step === 'success' || step === 'failure') && 'Enrollment process complete'}
+              </p>
 
               <div className="flex items-center gap-2 mb-8">
                 {steps.map((s, i) => (
                   <div key={s} className="flex items-center gap-2">
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                      i <= step ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
+                      i < currentStepIndex
+                        ? 'bg-green-600 text-white'
+                        : i === currentStepIndex
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-200 text-slate-500'
                     }`}>
-                      {i < step ? <Check className="h-4 w-4" /> : i + 1}
+                      {i < currentStepIndex ? <Check className="h-4 w-4" /> : i + 1}
                     </div>
                     <span className={`text-sm font-medium hidden sm:inline ${
-                      i <= step ? 'text-slate-900' : 'text-slate-400'
+                      i <= currentStepIndex ? 'text-slate-900' : 'text-slate-400'
                     }`}>{s}</span>
                     {i < steps.length - 1 && (
-                      <div className={`w-8 h-0.5 ${i < step ? 'bg-blue-600' : 'bg-slate-200'}`} />
+                      <div className={`w-8 h-0.5 ${i < currentStepIndex ? 'bg-green-600' : 'bg-slate-200'}`} />
                     )}
                   </div>
                 ))}
               </div>
 
-              {error && (
+              {error && step !== 'failure' && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              {step === 0 && (
+              {step === 'info' && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-slate-900">Personal Information</h3>
                   <div>
@@ -270,12 +395,33 @@ export default function EnrollPage() {
                       className="border-slate-300"
                     />
                   </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1 block">Goals / Notes</label>
+                    <textarea
+                      value={formData.notes}
+                      onChange={(e) => updateForm({ notes: e.target.value })}
+                      placeholder="Any specific goals or questions..."
+                      rows={3}
+                      className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.acceptTerms}
+                      onChange={(e) => updateForm({ acceptTerms: e.target.checked })}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-slate-600">
+                      I agree to the terms and conditions and understand that enrollment is subject to successful payment.
+                    </span>
+                  </label>
                 </div>
               )}
 
-              {step === 1 && (
+              {step === 'payment' && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900">Review & Confirm</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Order Summary</h3>
                   <div className="bg-slate-50 rounded-xl p-4 space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm text-slate-500">Name</span>
@@ -304,6 +450,7 @@ export default function EnrollPage() {
                       <span className="text-sm font-medium text-slate-900">₹{displayPrice.toLocaleString()}</span>
                     </div>
                   </div>
+
                   {courses.length > 0 && (
                     <div className="bg-slate-50 rounded-xl p-4">
                       <p className="text-sm font-medium text-slate-700 mb-2">Courses Included:</p>
@@ -317,65 +464,102 @@ export default function EnrollPage() {
                       </ul>
                     </div>
                   )}
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 mb-1 block">Goals / Notes</label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => updateForm({ notes: e.target.value })}
-                      placeholder="Any specific goals or questions..."
-                      rows={3}
-                      className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Shield className="h-4 w-4 text-green-600" />
+                    <span>Secure payment powered by Razorpay</span>
                   </div>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.acceptTerms}
-                      onChange={(e) => updateForm({ acceptTerms: e.target.checked })}
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-slate-600">
-                      I agree to the terms and conditions and understand that this is an application, not a guaranteed enrollment.
-                    </span>
-                  </label>
                 </div>
               )}
 
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
-                <Button
-                  variant="ghost"
-                  onClick={() => step > 0 ? setStep(step - 1) : router.back()}
-                  className="gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  {step > 0 ? 'Back' : 'Cancel'}
-                </Button>
-                {step < steps.length - 1 ? (
+              {step === 'success' && (
+                <div className="text-center py-8">
+                  <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Check className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Enrollment Confirmed!</h3>
+                  <p className="text-slate-500 mb-6">
+                    Your enrollment in <span className="font-medium text-blue-600">{program.name}</span> has been confirmed.
+                    You will receive a confirmation email shortly.
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <Link href="/dashboard">
+                      <Button className="bg-blue-600 hover:bg-blue-700">Go to Dashboard</Button>
+                    </Link>
+                    <Link href="/programs">
+                      <Button variant="outline">Browse More Programs</Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {step === 'failure' && (
+                <div className="text-center py-8">
+                  <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <X className="h-8 w-8 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Payment Failed</h3>
+                  <p className="text-slate-500 mb-6">
+                    {error || 'Something went wrong with your payment. Please try again.'}
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <Button
+                      onClick={() => {
+                        setStep('payment')
+                        setError('')
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 gap-1"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Retry Payment
+                    </Button>
+                    <Link href={`/programs/${slug}`}>
+                      <Button variant="outline">Back to Program</Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {(step === 'info' || step === 'payment') && (
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200">
                   <Button
-                    onClick={() => setStep(step + 1)}
-                    disabled={!canProceed()}
-                    className="bg-blue-600 hover:bg-blue-700 gap-1"
+                    variant="ghost"
+                    onClick={() => step === 'payment' ? setStep('info') : router.back()}
+                    className="gap-1"
                   >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4" />
+                    {step === 'payment' ? 'Back' : 'Cancel'}
                   </Button>
-                ) : (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={submitting || !formData.acceptTerms}
-                    className="bg-blue-600 hover:bg-blue-700 gap-1"
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      'Submit Application'
-                    )}
-                  </Button>
-                )}
-              </div>
+                  {step === 'info' ? (
+                    <Button
+                      onClick={() => setStep('payment')}
+                      disabled={!canProceed() || !formData.acceptTerms}
+                      className="bg-blue-600 hover:bg-blue-700 gap-1"
+                    >
+                      Proceed to Pay
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={openRazorpay}
+                      disabled={submitting}
+                      className="bg-blue-600 hover:bg-blue-700 gap-2"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4" />
+                          Pay Now ₹{displayPrice.toLocaleString()}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

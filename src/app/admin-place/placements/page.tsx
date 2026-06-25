@@ -23,9 +23,15 @@ import {
   Briefcase,
   Search,
   X,
-  Check,
 } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+
+interface StudentRecord {
+  id: string
+  full_name: string
+  email: string
+  phone: string | null
+}
 
 interface Placement {
   id: string
@@ -38,25 +44,20 @@ interface Placement {
   notes: string | null
   is_featured: boolean
   created_at: string
-  students?: { id: string; full_name: string; email: string; phone: string | null } | null
-  courses?: { title: string } | null
 }
 
-interface StudentRecord {
-  id: string
-  full_name: string
-  email: string
-  phone: string | null
+interface PlacementWithStudent extends Placement {
+  student?: StudentRecord | null
 }
 
 export default function AdminPlacementsPage() {
-  const [placements, setPlacements] = useState<Placement[]>([])
+  const [placements, setPlacements] = useState<PlacementWithStudent[]>([])
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingPlacement, setEditingPlacement] = useState<Placement | null>(null)
+  const [editingPlacement, setEditingPlacement] = useState<PlacementWithStudent | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [deletingPlacement, setDeletingPlacement] = useState<Placement | null>(null)
+  const [deletingPlacement, setDeletingPlacement] = useState<PlacementWithStudent | null>(null)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
     student_id: '',
@@ -79,22 +80,29 @@ export default function AdminPlacementsPage() {
       setLoading(true)
 
       const [placementsData, studentsData] = await Promise.all([
-        getRecords(
-          'placements',
-          undefined,
-          undefined,
-          '*,students(id,full_name,email,phone),courses(title)'
-        ),
+        getRecords('placements'),
         getRecords('students'),
       ])
 
-      const sortedPlacements = (placementsData || [])
-        .sort(
-          (a: Placement, b: Placement) =>
-            new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime()
-        )
-      setPlacements(sortedPlacements)
-      setStudents(studentsData || [])
+      const studentList: StudentRecord[] = (studentsData || []).map((s: any) => ({
+        id: s.id,
+        full_name: s.full_name || '',
+        email: s.email || '',
+        phone: s.phone,
+      }))
+      setStudents(studentList)
+
+      const studentMap = new Map(studentList.map((s) => [s.id, s]))
+
+      const enrichedPlacements: PlacementWithStudent[] = (placementsData || []).map((p: any) => ({
+        ...p,
+        student: studentMap.get(p.student_id) || null,
+      }))
+
+      enrichedPlacements.sort(
+        (a, b) => new Date(b.placed_at).getTime() - new Date(a.placed_at).getTime()
+      )
+      setPlacements(enrichedPlacements)
     } catch {
       // handled silently
     } finally {
@@ -156,7 +164,7 @@ export default function AdminPlacementsPage() {
     setShowForm(true)
   }
 
-  function openEdit(placement: Placement) {
+  function openEdit(placement: PlacementWithStudent) {
     setEditingPlacement(placement)
     setFormData({
       student_id: placement.student_id,
@@ -167,13 +175,12 @@ export default function AdminPlacementsPage() {
       notes: placement.notes || '',
       is_featured: placement.is_featured || false,
     })
-    // Set selected student from placement data
-    if (placement.profiles) {
+    if (placement.student) {
       setSelectedStudent({
         id: placement.student_id,
-        full_name: placement.profiles.full_name || '',
-        email: placement.profiles.email || '',
-        phone: placement.profiles.phone,
+        full_name: placement.student.full_name || '',
+        email: placement.student.email || '',
+        phone: placement.student.phone,
       })
     }
     setShowForm(true)
@@ -317,15 +324,15 @@ export default function AdminPlacementsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-slate-900">
-                        {placement.students?.full_name || 'Unknown'}
+                        {placement.student?.full_name || 'Unknown'}
                       </p>
-                    </div>
-                    <p className="text-sm text-slate-500">{placement.students?.email}</p>
+                      {placement.is_featured && (
+                        <Badge className="bg-yellow-100 text-yellow-700 border-0 text-xs">
                           Featured
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-slate-500">{placement.profiles?.email}</p>
+                    <p className="text-sm text-slate-500">{placement.student?.email || '-'}</p>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       {placement.company_name && (
                         <span className="inline-flex items-center gap-1 text-xs text-slate-600">
@@ -340,11 +347,6 @@ export default function AdminPlacementsPage() {
                       {placement.package_lpa && (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
                           <DollarSign className="h-3 w-3" /> {placement.package_lpa} LPA
-                        </span>
-                      )}
-                      {placement.courses?.title && (
-                        <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                          <GraduationCap className="h-3 w-3" /> {placement.courses.title}
                         </span>
                       )}
                       <span className="text-xs text-slate-400">
@@ -473,14 +475,13 @@ export default function AdminPlacementsPage() {
                                 {student.phone && ` • ${student.phone}`}
                               </p>
                             </div>
-                            <Check className="h-4 w-4 text-slate-300" />
                           </button>
                         ))}
                       </div>
                     )}
                     {studentDropdownOpen && filteredStudents.length === 0 && studentSearch && (
                       <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg p-4 text-center">
-                        <p className="text-sm text-slate-500">No students found matching "{studentSearch}"</p>
+                        <p className="text-sm text-slate-500">No students found matching &quot;{studentSearch}&quot;</p>
                       </div>
                     )}
                   </>
@@ -570,9 +571,9 @@ export default function AdminPlacementsPage() {
             <DialogDescription>
               Are you sure you want to delete{' '}
               <span className="font-semibold text-slate-900">
-                {deletingPlacement?.profiles?.full_name}
+                {deletingPlacement?.student?.full_name || 'this'}
               </span>
-              's placement record? This action cannot be undone.
+              &apos;s placement record? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
