@@ -12,11 +12,15 @@ const links = [
   { href: '/student/profile', label: 'Profile', icon: User },
 ]
 
-export default function StudentSidebar() {
+export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 z-40 flex flex-col">
+    <aside className={cn(
+      "sticky top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 flex flex-col shrink-0 transition-transform duration-300",
+      "md:translate-x-0",
+      isOpen ? "translate-x-0" : "-translate-x-full"
+    )}>
       <div className="p-6 border-b border-slate-200">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">

@@ -23,32 +23,74 @@ export default function AdminLayout({
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [adminUser, setAdminUser] = useState<UserProfile | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+
     async function checkAuth() {
-      const { data: { user } } = await supabase.auth.getUser()
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-      if (!user) {
+        if (cancelled) return
+
+        if (authError) {
+          setError('Authentication error: ' + authError.message)
+          setLoading(false)
+          return
+        }
+
+        if (!user) {
+          setLoading(false)
+          return
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (cancelled) return
+
+        if (profileError) {
+          setError('Failed to load profile: ' + profileError.message)
+          setLoading(false)
+          return
+        }
+
+        if (profile && profile.role === 'admin') {
+          setAdminUser(profile)
+        }
+
         setLoading(false)
-        return
+      } catch (err) {
+        if (!cancelled) {
+          setError('Session check failed. Please refresh the page.')
+          setLoading(false)
+        }
       }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (profile && (profile.role === 'admin' || profile.role === 'employee')) {
-        setAdminUser(profile)
-      }
-
-      setLoading(false)
     }
 
     checkAuth()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
+
+  useEffect(() => {
+    if (!loading) return
+    const timer = setTimeout(() => {
+      if (loading) {
+        setError('Session check timed out. Please refresh the page.')
+        setLoading(false)
+      }
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [loading])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -60,6 +102,27 @@ export default function AdminLayout({
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <Card className="w-full max-w-md border-slate-200">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50">
+              <Lock className="h-7 w-7 text-red-600" />
+            </div>
+            <CardTitle className="text-2xl text-slate-900">Session Error</CardTitle>
+            <p className="text-sm text-slate-500 mt-1">{error}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Link href="/login">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Sign In</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -92,13 +155,29 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <AdminSidebar isAdmin={adminUser.role === 'admin'} />
-      <main className="flex-1 p-6 ml-64">
-        <div className="flex items-center justify-end gap-4 mb-4">
-          <span className="text-sm text-slate-500">
-            {adminUser.full_name || adminUser.email}
-          </span>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="border-slate-300 hover:bg-slate-50">Logout</Button>
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-40 md:hidden" 
+          onClick={() => setSidebarOpen(false)} 
+        />
+      )}
+      <AdminSidebar isAdmin={adminUser.role === 'admin'} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <main className="flex-1 p-4 md:p-6 min-h-screen">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <button 
+            className="md:hidden p-2 rounded-lg hover:bg-slate-100"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-4 ml-auto">
+            <span className="text-sm text-slate-500 hidden sm:inline">
+              {adminUser.full_name || adminUser.email}
+            </span>
+            <Button variant="outline" size="sm" onClick={handleLogout} className="border-slate-300 hover:bg-slate-50">Logout</Button>
+          </div>
         </div>
         {children}
       </main>

@@ -34,8 +34,8 @@ export default function CourseCard({ course }: CourseCardProps) {
           <Badge variant="secondary" className={`${levelColors[course.level]} border-0`}>
             {course.level}
           </Badge>
-          {(course as any).categories && (
-            <Badge variant="outline" className="border-slate-200 text-slate-600">{(course as any).categories.name}</Badge>
+          {(course as any).branches && (
+            <Badge variant="outline" className="border-slate-200 text-slate-600">{(course as any).branches.name}</Badge>
           )}
         </div>
         <h3 className="font-bold text-slate-900 mb-1.5 line-clamp-1 group-hover:text-blue-600 transition-colors">{course.title}</h3>
@@ -66,7 +66,7 @@ export default function CourseCard({ course }: CourseCardProps) {
             )}
           </div>
           <Link href={`/courses/${course.slug}`}>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 shadow-sm">View Course</Button>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 shadow-sm w-full sm:w-auto">View Course</Button>
           </Link>
         </div>
       </div>

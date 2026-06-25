@@ -7,10 +7,9 @@ export const dynamic = 'force-dynamic'
 export default async function CourseLearnServerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  // Fetch course (public data, no auth needed)
   const { data: course } = await adminSupabase
     .from('courses')
-    .select('*, categories(*)')
+    .select('*, branches(*)')
     .eq('slug', slug)
     .single()
 
@@ -18,7 +17,6 @@ export default async function CourseLearnServerPage({ params }: { params: Promis
     notFound()
   }
 
-  // Fetch modules with lessons (public data)
   const { data: modules } = await adminSupabase
     .from('modules')
     .select('*, lessons(*)')
@@ -30,11 +28,5 @@ export default async function CourseLearnServerPage({ params }: { params: Promis
     lessons: (m.lessons || []).sort((a: any, b: any) => a.order_index - b.order_index),
   }))
 
-  // Fetch enrollment count (public data)
-  const { count: enrollmentCount } = await adminSupabase
-    .from('enrollments')
-    .select('id', { count: 'exact', head: true })
-    .eq('course_id', course.id)
-
-  return <CourseLearnClient course={course} modules={sortedModules} enrollmentCount={enrollmentCount || 0} />
+  return <CourseLearnClient course={course} modules={sortedModules} enrollmentCount={0} />
 }

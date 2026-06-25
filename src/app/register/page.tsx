@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, User, Mail, Phone, Lock, ArrowRight, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -41,6 +42,7 @@ export default function RegisterPage() {
 
     if (signUpError) {
       setError(signUpError.message)
+      notify.registerError(signUpError.message)
       setLoading(false)
       return
     }
@@ -59,11 +61,13 @@ export default function RegisterPage() {
       }
 
       if (data.session) {
+        notify.registerSuccess()
         window.location.href = '/'
         return
       }
     }
 
+    notify.registerSuccess()
     setSuccess(true)
     setLoading(false)
   }
@@ -143,7 +147,7 @@ export default function RegisterPage() {
             <p className="text-slate-500 mt-1">Fill in your details to get started</p>
           </div>
 
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="fullName" className="text-slate-700">Full Name</Label>

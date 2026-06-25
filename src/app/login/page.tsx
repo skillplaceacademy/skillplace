@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -32,6 +33,7 @@ export default function LoginPage() {
 
     if (authError) {
       setError(authError.message)
+      notify.loginError(authError.message)
       setLoading(false)
       return
     }
@@ -40,6 +42,7 @@ export default function LoginPage() {
 
     // Check user role and redirect accordingly
     if (data.user) {
+      notify.loginSuccess(data.user.user_metadata?.full_name || data.user.email)
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -67,6 +70,7 @@ export default function LoginPage() {
 
     if (authError) {
       setError(authError.message)
+      notify.loginError(authError.message)
     }
   }
 
@@ -81,8 +85,10 @@ export default function LoginPage() {
 
     if (resetError) {
       setError(resetError.message)
+      notify.loginError(resetError.message)
     } else {
       setResetSent(true)
+      notify.registerSuccess()
     }
     setResetLoading(false)
   }
@@ -140,7 +146,7 @@ export default function LoginPage() {
             <p className="text-slate-500 mt-1">Enter your credentials to access your account</p>
           </div>
 
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
             {showReset ? (
               resetSent ? (
                 <div className="text-center py-4">

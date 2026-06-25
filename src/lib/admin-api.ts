@@ -37,14 +37,18 @@ export async function getRecords(table: string, filter?: string, value?: string,
   if (join) {
     params.set('join', join)
   }
-  const res = await fetch(`${API_BASE}?${params.toString()}`)
+  const url = `${API_BASE}?${params.toString()}`
+  const res = await fetch(url)
   const json = await res.json()
   if (!res.ok) throw new Error(json.error || 'Request failed')
   return json.data
 }
 
-export async function getRecord(table: string, id: string) {
-  const res = await fetch(`${API_BASE}?table=${table}&id=${id}`)
+export async function getRecord(table: string, id: string, join?: string) {
+  const params = new URLSearchParams({ table })
+  if (id) params.set('id', id)
+  if (join) params.set('join', join)
+  const res = await fetch(`${API_BASE}?${params.toString()}`)
   const json = await res.json()
   if (!res.ok) throw new Error(json.error || 'Request failed')
   return json.data

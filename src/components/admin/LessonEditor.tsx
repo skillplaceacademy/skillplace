@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, GripVertical, Video, FileText, HelpCircle, BookOpen, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import type { Lesson } from '@/types'
 
 interface LessonEditorProps {
@@ -87,6 +88,7 @@ export default function LessonEditor({ moduleId, lessons, onRefresh, onEditQuiz 
 
     if (editingLesson) {
       await supabase.from('lessons').update(payload).eq('id', editingLesson.id)
+      notify.lessonUpdated()
     } else {
       const maxOrder = lessons.length
       await supabase.from('lessons').insert({
@@ -94,6 +96,7 @@ export default function LessonEditor({ moduleId, lessons, onRefresh, onEditQuiz 
         module_id: moduleId,
         order_index: maxOrder + 1,
       })
+      notify.lessonCreated()
     }
 
     setSaving(false)
@@ -105,6 +108,7 @@ export default function LessonEditor({ moduleId, lessons, onRefresh, onEditQuiz 
   async function handleDelete() {
     if (!deletingLesson) return
     await supabase.from('lessons').delete().eq('id', deletingLesson.id)
+    notify.lessonDeleted()
     setShowDeleteConfirm(false)
     setDeletingLesson(null)
     onRefresh()

@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, GripVertical, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import type { Module } from '@/types'
 
 interface ModuleEditorProps {
@@ -40,6 +41,7 @@ export default function ModuleEditor({ courseId, modules, onRefresh }: ModuleEdi
 
     if (editingModule) {
       await supabase.from('modules').update(formData).eq('id', editingModule.id)
+      notify.moduleUpdated()
     } else {
       const maxOrder = modules.length
       await supabase.from('modules').insert({
@@ -47,6 +49,7 @@ export default function ModuleEditor({ courseId, modules, onRefresh }: ModuleEdi
         course_id: courseId,
         order_index: maxOrder + 1,
       })
+      notify.moduleCreated()
     }
 
     setSaving(false)
@@ -59,6 +62,7 @@ export default function ModuleEditor({ courseId, modules, onRefresh }: ModuleEdi
   async function handleDelete() {
     if (!deletingModule) return
     await supabase.from('modules').delete().eq('id', deletingModule.id)
+    notify.moduleDeleted()
     setShowDeleteConfirm(false)
     setDeletingModule(null)
     onRefresh()

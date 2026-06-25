@@ -1,25 +1,25 @@
 import Link from 'next/link'
-import { Building2, Cpu, Zap, Wrench, ArrowRight } from 'lucide-react'
+import { HardHat, Cpu, Zap, Wrench, ArrowRight } from 'lucide-react'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
 const iconMap: any = {
-  Building2,
+  HardHat,
   Wrench,
   Zap,
   Cpu,
 }
 
-async function getCategoriesWithCourses() {
-  const { data: categories, error: catError } = await adminSupabase
-    .from('categories')
+async function getBranchesWithCourses() {
+  const { data: branches, error: branchError } = await adminSupabase
+    .from('branches')
     .select('*')
     .eq('is_active', true)
-    .order('order_index', { ascending: true })
+    .order('name', { ascending: true })
 
-  if (catError) {
-    console.error('Error fetching categories:', catError)
+  if (branchError) {
+    console.error('Error fetching branches:', branchError)
     return []
   }
 
@@ -31,35 +31,35 @@ async function getCategoriesWithCourses() {
 
   if (courseError) {
     console.error('Error fetching courses:', courseError)
-    return categories || []
+    return branches || []
   }
 
-  return (categories || []).map((cat: any) => ({
-    ...cat,
-    courses: (courses || []).filter((c: any) => c.category_id === cat.id),
+  return (branches || []).map((branch: any) => ({
+    ...branch,
+    courses: (courses || []).filter((c: any) => c.branch_id === branch.id),
   }))
 }
 
 export default async function CoursesSection() {
-  const categories = await getCategoriesWithCourses()
+  const branches = await getBranchesWithCourses()
 
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-slate-900">Our Course Categories</h2>
+          <h2 className="text-3xl font-bold text-slate-900">Our Course Branches</h2>
           <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
             Explore our comprehensive range of engineering courses designed to make you industry-ready.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((cat: any) => {
-            const Icon = iconMap[cat.icon] || Building2
+          {branches.map((branch: any) => {
+            const Icon = iconMap[branch.icon] || HardHat
             return (
               <Link
-                key={cat.id}
-                href={`/courses?category=${cat.slug}`}
+                key={branch.id}
+                href="/courses"
                 className="group block p-6 bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:border-blue-200 transition-all duration-300"
               >
                 <div className="flex items-center gap-3 mb-4">
@@ -67,19 +67,19 @@ export default async function CoursesSection() {
                     <Icon className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{cat.name}</h3>
-                    <p className="text-sm text-slate-500">{cat.courses?.length || 0} courses</p>
+                    <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{branch.name}</h3>
+                    <p className="text-sm text-slate-500">{branch.courses?.length || 0} courses</p>
                   </div>
                 </div>
                 <ul className="space-y-1.5 mb-4">
-                  {(cat.courses || []).slice(0, 4).map((course: any) => (
+                  {(branch.courses || []).slice(0, 4).map((course: any) => (
                     <li key={course.id} className="text-sm text-slate-500 flex items-center gap-2">
                       <span className="h-1 w-1 bg-blue-400 rounded-full" />
                       {course.title}
                     </li>
                   ))}
-                  {(cat.courses || []).length > 4 && (
-                    <li className="text-sm text-slate-500">+{(cat.courses || []).length - 4} more</li>
+                  {(branch.courses || []).length > 4 && (
+                    <li className="text-sm text-slate-500">+{(branch.courses || []).length - 4} more</li>
                   )}
                 </ul>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 group-hover:gap-2 transition-all">

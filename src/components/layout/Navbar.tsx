@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { Menu, X, GraduationCap, Shield, User, LogOut, ShoppingBag, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 
 const navLinks = [
   { href: '/', label: 'Home' },
+  { href: '/programs', label: 'Programs' },
   { href: '/courses', label: 'Courses' },
   { href: '/placements', label: 'Placements' },
   { href: '/about', label: 'About' },
@@ -44,6 +46,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
+    notify.logoutSuccess()
     window.location.href = '/'
   }
 
@@ -65,7 +68,7 @@ export default function Navbar() {
           onClick={() => setMobileOpen(false)}
         />
       )}
-      <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60' : 'bg-white border-b border-slate-200'}`}>
+      <nav className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/60' : 'bg-white border-b border-slate-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2.5 group">
@@ -128,8 +131,8 @@ export default function Navbar() {
 
                   {dropdownOpen && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden">
+                      <div className="fixed inset-0 z-50" onClick={() => setDropdownOpen(false)} />
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-lg z-[60] overflow-hidden">
                         <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
                           <p className="text-sm font-medium text-slate-900 truncate">{user.user_metadata?.full_name || 'User'}</p>
                           <p className="text-xs text-slate-500 truncate">{user.email}</p>

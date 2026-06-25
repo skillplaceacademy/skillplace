@@ -5,11 +5,14 @@ import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import Link from 'next/link'
-import type { Enrollment } from '@/types'
 
-interface EnrollmentWithCourse extends Enrollment {
+interface PurchaseWithCourse {
+  id: string
+  course_id: string
+  amount: number
+  status: string
+  created_at: string
   courses: {
     title: string
     slug: string
@@ -18,12 +21,12 @@ interface EnrollmentWithCourse extends Enrollment {
 }
 
 export default function PurchasedCourses() {
-  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([])
+  const [purchases, setPurchases] = useState<PurchaseWithCourse[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ id: string } | null>(null)
 
   useEffect(() => {
-    async function fetchEnrollments() {
+    async function fetchPurchases() {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       if (!currentUser) {
         setLoading(false)
@@ -33,18 +36,18 @@ export default function PurchasedCourses() {
       setUser(currentUser)
 
       const { data } = await supabase
-        .from('enrollments')
+        .from('purchases')
         .select('*, courses(title, slug, thumbnail_url)')
         .eq('user_id', currentUser.id)
-        .order('enrolled_at', { ascending: false })
+        .order('created_at', { ascending: false })
 
       if (data) {
-        setEnrollments(data as EnrollmentWithCourse[])
+        setPurchases(data as PurchaseWithCourse[])
       }
       setLoading(false)
     }
 
-    fetchEnrollments()
+    fetchPurchases()
   }, [])
 
   if (loading) {
@@ -65,8 +68,8 @@ export default function PurchasedCourses() {
 
   if (!user) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl border border-border">
-        <p className="text-muted-foreground mb-4">Log in to see your purchased courses</p>
+      <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+        <p className="text-slate-500 mb-4">Log in to see your purchased courses</p>
         <Link href="/login">
           <Button>Log In</Button>
         </Link>
@@ -74,10 +77,10 @@ export default function PurchasedCourses() {
     )
   }
 
-  if (enrollments.length === 0) {
+  if (purchases.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl border border-border">
-        <p className="text-muted-foreground mb-4">You haven&apos;t enrolled in any courses yet</p>
+      <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+        <p className="text-slate-500 mb-4">You haven&apos;t purchased any courses yet</p>
         <Link href="/courses">
           <Button>Browse Courses</Button>
         </Link>
@@ -87,17 +90,17 @@ export default function PurchasedCourses() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {enrollments.map((enrollment) => (
-        <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-all duration-200">
+      {purchases.map((purchase) => (
+        <Card key={purchase.id} className="overflow-hidden hover:shadow-lg transition-all duration-200">
           <div className="h-32 bg-slate-100 flex items-center justify-center">
-            {enrollment.courses?.thumbnail_url ? (
+            {purchase.courses?.thumbnail_url ? (
               <img
-                src={enrollment.courses.thumbnail_url}
-                alt={enrollment.courses.title}
+                src={purchase.courses.thumbnail_url}
+                alt={purchase.courses.title}
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-muted-foreground text-sm">No thumbnail</span>
+              <span className="text-slate-400 text-sm">No thumbnail</span>
             )}
           </div>
           <CardContent className="p-4">
@@ -105,27 +108,20 @@ export default function PurchasedCourses() {
               <Badge
                 variant="secondary"
                 className={
-                  enrollment.status === 'completed'
+                  purchase.status === 'completed'
                     ? 'bg-green-100 text-green-700'
                     : 'bg-blue-100 text-blue-700'
                 }
               >
-                {enrollment.status}
+                {purchase.status}
               </Badge>
             </div>
-            <h3 className="font-semibold text-foreground mb-3 line-clamp-1">
-              {enrollment.courses?.title}
+            <h3 className="font-semibold text-slate-900 mb-3 line-clamp-1">
+              {purchase.courses?.title}
             </h3>
-            <div className="mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium text-foreground">{enrollment.progress_percent}%</span>
-              </div>
-              <Progress value={enrollment.progress_percent} />
-            </div>
-            <Link href={`/courses/${enrollment.courses?.slug}`}>
-              <Button className="w-full" variant={enrollment.progress_percent === 100 ? 'outline' : 'default'}>
-                {enrollment.progress_percent === 100 ? 'Review Course' : 'Continue Learning'}
+            <Link href={`/courses/${purchase.courses?.slug}`}>
+              <Button className="w-full" variant="outline">
+                {purchase.status === 'completed' ? 'Start Learning' : 'View Course'}
               </Button>
             </Link>
           </CardContent>

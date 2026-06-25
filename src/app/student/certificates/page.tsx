@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
 import { Download, Award, ArrowLeft } from 'lucide-react'
 
 export default function StudentCertificatesPage() {
@@ -48,11 +49,11 @@ export default function StudentCertificatesPage() {
               <ArrowLeft className="h-4 w-4 mr-1" /> Back
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-slate-900">My Certificates</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">My Certificates</h1>
         </div>
 
         {certificates.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 md:p-12 text-center">
             <Award className="h-16 w-16 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-500 mb-2">No certificates yet.</p>
             <p className="text-sm text-slate-400 mb-6">Complete a course to earn your first certificate!</p>
@@ -83,7 +84,7 @@ export default function StudentCertificatesPage() {
                 <p className="text-xs text-slate-400 mb-4">
                   Duration: {cert.courses?.duration_hours || 'N/A'} hours
                 </p>
-                <a href={`/api/certificates/${cert.id}`} target="_blank" rel="noopener noreferrer">
+                <a href={`/api/certificates/${cert.id}`} target="_blank" rel="noopener noreferrer" onClick={() => notify.certificateDownloaded()}>
                   <Button className="w-full bg-blue-600 hover:bg-blue-700">
                     <Download className="h-4 w-4 mr-2" /> Download Certificate
                   </Button>
