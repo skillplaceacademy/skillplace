@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server'
-import Razorpay from 'razorpay'
-import crypto from 'crypto'
+import { verifyPaymentSignature, fetchPayment } from '@/lib/razorpay'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-
-const razorpay = new Razorpay({
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-})
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`verify-payment:${ip}`, 10, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: rateLimitHeaders }
+    )
+  }
+
   try {
     const {
       razorpay_order_id,
@@ -30,24 +36,16 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify signature
-    const body = razorpay_order_id + '|' + razorpay_payment_id
-    const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
-      .update(body)
-      .digest('hex')
-
-    if (expectedSignature !== razorpay_signature) {
+    const isValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+    if (!isValid) {
       return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 })
     }
 
-    // Verify payment status with Razorpay
-    const payment = await razorpay.payments.fetch(razorpay_payment_id)
+    const payment = await fetchPayment(razorpay_payment_id)
     if (payment.status !== 'captured') {
       return NextResponse.json({ error: 'Payment not captured' }, { status: 400 })
     }
 
-    // Try to get authenticated user from session
     let authUserId: string | null = null
     try {
       const supabase = await createSupabaseServerClient()
@@ -59,7 +57,6 @@ export async function POST(request: Request) {
       // Not authenticated, proceed without auth user
     }
 
-    // Find or create profile by email
     let profileId: string | null = null
 
     const { data: existingProfile } = await adminSupabase
@@ -92,7 +89,6 @@ export async function POST(request: Request) {
         .single()
 
       if (profileError) {
-        console.error('Profile creation error:', profileError)
         return NextResponse.json(
           { error: 'Failed to create profile' },
           { status: 500 }
@@ -101,13 +97,11 @@ export async function POST(request: Request) {
       profileId = newProfile.id
     }
 
-    // Create enrollment record
     const { data: enrollment, error: enrollmentError } = await adminSupabase
       .from('enrollments')
       .insert({
         user_id: profileId,
-        course_id: programId,
-        program_type: payment.notes?.program_type || null,
+        program_id: programId,
         status: 'active',
         notes: notes || null,
       })
@@ -115,23 +109,37 @@ export async function POST(request: Request) {
       .single()
 
     if (enrollmentError) {
-      console.error('Enrollment error:', enrollmentError)
       return NextResponse.json(
         { error: 'Failed to create enrollment' },
         { status: 500 }
       )
     }
 
+    const orderId = payment.notes?.order_id || razorpay_order_id
+    if (payment.notes?.coupon_id) {
+      const { data: coupon } = await adminSupabase
+        .from('coupons')
+        .select('used_count')
+        .eq('id', payment.notes.coupon_id)
+        .single()
+
+      if (coupon) {
+        await adminSupabase
+          .from('coupons')
+          .update({ used_count: coupon.used_count + 1 })
+          .eq('id', payment.notes.coupon_id)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       enrollmentId: enrollment.id,
       paymentId: razorpay_payment_id,
-    })
+    }, { headers: rateLimitHeaders })
   } catch (error: unknown) {
-    console.error('Payment verification error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Verification failed' },
-      { status: 500 }
+      { status: 500, headers: rateLimitHeaders }
     )
   }
 }

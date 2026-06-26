@@ -20,7 +20,19 @@ interface ProgramInfo {
   duration_weeks: number
   features: string[]
   program_type: string
-  branches: { name: string; slug: string } | null
+}
+
+interface CouponData {
+  id: string
+  code: string
+  discount_type: 'percent' | 'amount'
+  discount_rate: number
+  min_order_amount: number | null
+  max_uses: number | null
+  used_count: number
+  valid_from: string
+  valid_until: string | null
+  is_active: boolean
 }
 
 interface Course {
@@ -63,6 +75,10 @@ export default function EnrollPage() {
     notes: '',
     acceptTerms: false,
   })
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null)
+  const [couponError, setCouponError] = useState('')
+  const [applyingCoupon, setApplyingCoupon] = useState(false)
 
   useEffect(() => {
     fetchUserProfile()
@@ -114,7 +130,7 @@ export default function EnrollPage() {
   async function fetchProgram() {
     setLoading(true)
     try {
-      const programs = await getRecords('training_programs', 'slug', slug, 'branches(*)')
+      const programs = await getRecords('training_programs', 'slug', slug)
       if (!programs || programs.length === 0) {
         setLoading(false)
         return
@@ -140,6 +156,57 @@ export default function EnrollPage() {
     setFormData(prev => ({ ...prev, ...updates }))
   }
 
+  function getCouponDiscount(): number {
+    if (!appliedCoupon || !program) return 0
+    const basePrice = program.discount_price || program.price
+    if (appliedCoupon.discount_type === 'percent') {
+      return Math.round(basePrice * appliedCoupon.discount_rate / 100)
+    }
+    return Math.min(appliedCoupon.discount_rate, basePrice)
+  }
+
+  function getFinalPrice(): number {
+    if (!program) return 0
+    const basePrice = program.discount_price || program.price
+    const discount = getCouponDiscount()
+    return Math.max(basePrice - discount, 0)
+  }
+
+  async function applyCoupon() {
+    if (!couponCode.trim() || !program) return
+    setApplyingCoupon(true)
+    setCouponError('')
+    setAppliedCoupon(null)
+
+    try {
+      const basePrice = program.discount_price || program.price
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode.trim(), amount: basePrice }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setCouponError(data.error || 'Invalid coupon')
+        return
+      }
+
+      setAppliedCoupon(data.coupon)
+      setCouponError('')
+    } catch {
+      setCouponError('Failed to validate coupon')
+    } finally {
+      setApplyingCoupon(false)
+    }
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon(null)
+    setCouponCode('')
+    setCouponError('')
+  }
+
   const openRazorpay = useCallback(async () => {
     if (!program) return
     setSubmitting(true)
@@ -156,6 +223,7 @@ export default function EnrollPage() {
           studentName: formData.fullName,
           email: formData.email,
           phone: formData.phone,
+          couponCode: appliedCoupon?.code || null,
         }),
       })
 
@@ -233,7 +301,7 @@ export default function EnrollPage() {
       setError(err instanceof Error ? err.message : 'Failed to initiate payment')
       setSubmitting(false)
     }
-  }, [program, formData])
+  }, [program, formData, appliedCoupon])
 
   function canProceed() {
     return formData.fullName.trim() !== '' && formData.email.trim() !== '' && formData.phone.trim() !== ''
@@ -270,7 +338,8 @@ export default function EnrollPage() {
     )
   }
 
-  const displayPrice = program.discount_price || program.price
+  const displayPrice = getFinalPrice()
+  const originalPrice = program.discount_price || program.price
 
   return (
     <div className="bg-slate-50 min-h-screen pb-24 md:pb-0">
@@ -312,7 +381,13 @@ export default function EnrollPage() {
               </div>
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                 <p className="text-xs text-blue-800 font-medium mb-1">Program Fee</p>
+                {appliedCoupon && getCouponDiscount() > 0 && (
+                  <p className="text-sm text-slate-400 line-through">₹{originalPrice.toLocaleString()}</p>
+                )}
                 <p className="text-2xl font-bold text-slate-900">₹{displayPrice.toLocaleString()}</p>
+                {appliedCoupon && getCouponDiscount() > 0 && (
+                  <p className="text-xs text-green-600 font-medium mt-1">You save ₹{getCouponDiscount().toLocaleString()} with {appliedCoupon.code}</p>
+                )}
               </div>
             </div>
           </div>
@@ -447,9 +522,54 @@ export default function EnrollPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-slate-500">Fee</span>
-                      <span className="text-sm font-medium text-slate-900">₹{displayPrice.toLocaleString()}</span>
+                      <div className="text-right">
+                        {appliedCoupon && getCouponDiscount() > 0 && (
+                          <span className="text-sm text-slate-400 line-through mr-2">₹{originalPrice.toLocaleString()}</span>
+                        )}
+                        <span className="text-sm font-medium text-slate-900">₹{displayPrice.toLocaleString()}</span>
+                      </div>
                     </div>
+                    {appliedCoupon && getCouponDiscount() > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span className="text-sm">Coupon ({appliedCoupon.code})</span>
+                        <span className="text-sm font-medium">-₹{getCouponDiscount().toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
+
+                  {!appliedCoupon && (
+                    <div className="flex gap-2">
+                      <Input
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon code"
+                        className="border-slate-300 font-mono text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-slate-300 shrink-0"
+                        onClick={applyCoupon}
+                        disabled={applyingCoupon || !couponCode.trim()}
+                      >
+                        {applyingCoupon ? 'Applying...' : 'Apply'}
+                      </Button>
+                    </div>
+                  )}
+                  {appliedCoupon && (
+                    <div className="flex items-center justify-between bg-green-50 rounded-xl p-3 border border-green-200">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">{appliedCoupon.code} applied!</span>
+                      </div>
+                      <button type="button" onClick={removeCoupon} className="text-sm text-red-500 hover:text-red-700">Remove</button>
+                    </div>
+                  )}
+                  {couponError && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                      <p className="text-sm text-red-600">{couponError}</p>
+                    </div>
+                  )}
 
                   {courses.length > 0 && (
                     <div className="bg-slate-50 rounded-xl p-4">

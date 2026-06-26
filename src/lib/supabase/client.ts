@@ -105,17 +105,38 @@ export async function createSession(
     expires_at: expiresAt.toISOString(),
   }
 
-  // Use fetch with JWT for RLS policy (auth.uid() = user_id)
-  // Fall back to supabase client (anon key) if no token provided
+  // Get the client to use (JWT-authenticated if token provided, else anon)
+  let client = supabase
   if (accessToken) {
     const { createClient } = await import('@supabase/supabase-js')
-    const userClient = createClient(supabaseUrl, accessToken)
-    const { error } = await userClient.from('user_sessions').insert(sessionRecord)
-    if (error) throw error
-  } else {
-    const { error } = await supabase.from('user_sessions').insert(sessionRecord)
-    if (error) throw error
+    client = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    })
   }
+
+  // Auto-create profile if user doesn't have one (handles new users without profile)
+  const { data: existingProfile } = await client
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .single()
+
+  if (!existingProfile) {
+    await client.from('profiles').insert({
+      id: userId,
+      email: '',
+      full_name: null,
+      phone: null,
+      role: 'student',
+      is_active: true,
+    })
+  }
+
+  // Insert session record
+  const { error } = await client.from('user_sessions').insert(sessionRecord)
+  if (error) throw error
 
   return { sessionToken, accessToken: accessTokenGenerated, refreshToken, expiresAt }
 }
@@ -125,13 +146,23 @@ export async function validateSession(
 ): Promise<ValidatedSession | null> {
   const { data, error } = await supabase
     .from('user_sessions')
-    .select('*,profiles(*)')
+    .select('*')
     .eq('session_token', sessionToken)
     .eq('is_active', true)
     .gt('expires_at', new Date().toISOString())
     .single()
 
   if (error || !data) return null
+
+  // Fetch profile separately (no FK join available)
+  // Use .maybeSingle() to avoid error when profile doesn't exist
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', data.user_id)
+    .maybeSingle()
+
+  data.profiles = profile || null
   return data as ValidatedSession
 }
 

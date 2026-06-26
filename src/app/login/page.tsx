@@ -43,8 +43,7 @@ export default function LoginPage() {
       try {
         const session = await createSession(data.user.id, navigator.userAgent, null, data.session?.access_token)
         document.cookie = `sp_session=${session.sessionToken}; path=/; max-age=604800; secure; samesite=lax`
-      } catch (e) {
-        console.error('Failed to create session:', e)
+      } catch {
         // Session creation is best-effort
       }
 

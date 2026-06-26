@@ -68,7 +68,8 @@ export interface ProgramCourse {
 export interface Enrollment {
   id: string
   user_id: string
-  program_id: string
+  program_id: string | null
+  course_id: string | null
   branch_id: string | null
   status: 'pending' | 'active' | 'completed' | 'cancelled'
   notes: string | null
@@ -77,6 +78,7 @@ export interface Enrollment {
   training_programs?: TrainingProgram
   branches?: Branch
   profiles?: Profile
+  courses?: Course
 }
 
 export interface Purchase {

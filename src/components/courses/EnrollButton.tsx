@@ -25,7 +25,7 @@ export default function EnrollButton({
   size = 'default',
 }: EnrollButtonProps) {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; user_metadata?: Record<string, unknown>; email?: string } | null>(null)
   const [enrolled, setEnrolled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
@@ -68,7 +68,6 @@ export default function EnrollButton({
       user_id: user.id,
       course_id: courseId,
       status: 'active',
-      progress_percent: 0,
     })
 
     if (enrollError) {
@@ -104,7 +103,6 @@ export default function EnrollButton({
       const data = await res.json()
 
       if (!res.ok) {
-        // Show specific error from API
         if (data.error?.includes('Authentication') || data.error?.includes('BAD_REQUEST')) {
           throw new Error('Payment gateway not configured. Please contact support.')
         }
@@ -123,16 +121,16 @@ export default function EnrollButton({
       } else {
         throw new Error('Unexpected response from payment server')
       }
-    } catch (err: any) {
-      console.error('Payment error:', err)
-      setError(err.message || 'Something went wrong. Please try again.')
-      notify.paymentError(err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      setError(message)
+      notify.paymentError(message)
     }
 
     setProcessing(false)
   }
 
-  function openRazorpayCheckout(data: any) {
+  function openRazorpayCheckout(data: { key: string; amount: number; currency: string; orderId: string }) {
     const options = {
       key: data.key,
       amount: data.amount,
@@ -141,7 +139,11 @@ export default function EnrollButton({
       description: title,
       order_id: data.orderId,
       image: '/logo.png',
-      handler: async function (response: any) {
+      handler: async function (response: {
+        razorpay_order_id: string
+        razorpay_payment_id: string
+        razorpay_signature: string
+      }) {
         setProcessing(true)
         setError('')
         try {
@@ -165,15 +167,14 @@ export default function EnrollButton({
             setError('Payment verification failed. Please contact support.')
             notify.paymentError('Payment verification failed.')
           }
-        } catch (err) {
-          console.error('Verification error:', err)
+        } catch {
           setError('Payment verification failed. Please try again.')
           notify.paymentError('Payment verification failed.')
         }
         setProcessing(false)
       },
       prefill: {
-        name: user?.user_metadata?.full_name || '',
+        name: user?.user_metadata?.full_name as string || '',
         email: user?.email || '',
       },
       theme: {
@@ -189,7 +190,7 @@ export default function EnrollButton({
     const script = document.createElement('script')
     script.src = 'https://checkout.razorpay.com/v1/checkout.js'
     script.onload = () => {
-      const rzp = new (window as any).Razorpay(options)
+      const rzp = new (window as unknown as { Razorpay: new (options: Record<string, unknown>) => { open: () => void } }).Razorpay(options)
       rzp.open()
     }
     script.onerror = () => {
@@ -200,7 +201,6 @@ export default function EnrollButton({
     document.body.appendChild(script)
   }
 
-  // Already enrolled
   if (enrolled) {
     return (
       <a href={`/courses/${courseSlug}/learn`}>
@@ -212,7 +212,6 @@ export default function EnrollButton({
     )
   }
 
-  // Loading
   if (loading) {
     return (
       <Button size={size} disabled className="w-full">
@@ -224,7 +223,6 @@ export default function EnrollButton({
 
   return (
     <div className="space-y-3">
-      {/* Price Display */}
       {!isFree && (
         <div className="flex items-center justify-between bg-blue-50 rounded-xl p-4">
           <div>
@@ -249,7 +247,6 @@ export default function EnrollButton({
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
         <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
           <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
@@ -257,7 +254,6 @@ export default function EnrollButton({
         </div>
       )}
 
-      {/* Enroll Button */}
       {isFree ? (
         <Button
           size={size}
@@ -288,7 +284,6 @@ export default function EnrollButton({
         </Button>
       )}
 
-      {/* Trust Badges */}
       <div className="flex items-center justify-center gap-4 pt-2">
         <div className="flex items-center gap-1 text-xs text-slate-500">
           <Lock className="h-3 w-3" />
