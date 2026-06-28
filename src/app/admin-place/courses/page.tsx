@@ -84,7 +84,6 @@ export default function AdminCoursesPage() {
           new Date(b.created_at || '').getTime() -
           new Date(a.created_at || '').getTime()
       )
-      console.log('Fetched courses:', sortedCourses)
       setCourses(sortedCourses)
       setBranches(
         (branchesData || []).filter(

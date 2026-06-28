@@ -1,19 +1,47 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Award, ClipboardList, User, LogOut } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { LayoutDashboard, BookOpen, Award, ClipboardList, User, LogOut, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase/client'
 
 const links = [
   { href: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/student/my-courses', label: 'My Courses', icon: BookOpen },
   { href: '/student/certificates', label: 'Certificates', icon: Award },
   { href: '/student/tests', label: 'Tests', icon: ClipboardList },
+  { href: '/student/notifications', label: 'Notifications', icon: Bell },
   { href: '/student/profile', label: 'Profile', icon: User },
 ]
 
 export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const pathname = usePathname()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    async function fetchUnread() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const [individualRes, publicRes] = await Promise.all([
+        supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false),
+        supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .is('target_user_id', null)
+          .eq('is_read', false),
+      ])
+
+      const total = (individualRes.count || 0) + (publicRes.count || 0)
+      setUnreadCount(total)
+    }
+    fetchUnread()
+  }, [])
 
   return (
     <aside className={cn(
@@ -36,6 +64,7 @@ export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; 
         {links.map((link) => {
           const Icon = link.icon
           const isActive = pathname === link.href
+          const showBadge = link.href === '/student/notifications' && unreadCount > 0
           return (
             <Link
               key={link.href}
@@ -49,6 +78,11 @@ export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; 
             >
               <Icon className="h-4 w-4" />
               {link.label}
+              {showBadge && (
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
           )
         })}

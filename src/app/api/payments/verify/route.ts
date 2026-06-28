@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyPaymentSignature, fetchPayment } from '@/lib/razorpay'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`course-verify:${ip}`, 10, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
+  }
+
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       await request.json()
@@ -28,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: paymentRecord, error: recordError } = await adminSupabase
-      .from('payments')
+      .from('purchases')
       .select('*')
       .eq('razorpay_order_id', razorpay_order_id)
       .eq('status', 'pending')
@@ -39,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: updatedPayment } = await adminSupabase
-      .from('payments')
+      .from('purchases')
       .update({
         razorpay_payment_id,
         razorpay_signature,
@@ -66,7 +75,6 @@ export async function POST(request: NextRequest) {
           user_id: paymentRecord.user_id,
           course_id: paymentRecord.course_id,
           status: 'active',
-          progress_percent: 0,
         })
         .select()
         .single()
@@ -86,9 +94,9 @@ export async function POST(request: NextRequest) {
       payment: updatedPayment,
       enrollment,
       redirectUrl: `/courses/${course?.slug}/learn`,
-    })
+    }, { headers: rateLimitHeaders })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 500, headers: rateLimitHeaders })
   }
 }

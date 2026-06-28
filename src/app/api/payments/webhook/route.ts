@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       const paymentId = payment.id
 
       const { data: paymentRecord } = await adminSupabase
-        .from('payments')
+        .from('purchases')
         .select('*')
         .eq('razorpay_order_id', orderId)
         .eq('status', 'pending')
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
       if (paymentRecord) {
         await adminSupabase
-          .from('payments')
+          .from('purchases')
           .update({
             razorpay_payment_id: paymentId,
             status: 'completed',
@@ -50,7 +50,6 @@ export async function POST(request: NextRequest) {
             user_id: paymentRecord.user_id,
             course_id: paymentRecord.course_id,
             status: 'active',
-            progress_percent: 0,
           })
         }
       }

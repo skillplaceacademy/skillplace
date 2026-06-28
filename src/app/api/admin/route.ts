@@ -1,17 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/rest\/v1\/?$/, '')
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const adminSupabase = createClient(supabaseUrl, serviceKey)
 
+const ALLOWED_TABLES = new Set([
+  'branches',
+  'courses',
+  'training_programs',
+  'program_courses',
+  'profiles',
+  'enrollments',
+  'purchases',
+  'testimonials',
+  'leads',
+  'modules',
+  'lessons',
+  'tests',
+  'test_questions',
+  'employees',
+  'employee_permissions',
+  'coupons',
+])
+
+async function verifyAdminSession(request: NextRequest): Promise<boolean> {
+  const supabaseAccessToken = request.cookies.get('sb-access-token')?.value
+  if (!supabaseAccessToken) return false
+
+  try {
+    const { data: { user }, error } = await adminSupabase.auth.getUser(supabaseAccessToken)
+    if (error || !user) return false
+
+    const { data: profile } = await adminSupabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    return profile?.role === 'admin'
+  } catch {
+    return false
+  }
+}
+
 export async function GET(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`admin:${ip}`, 60, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
+  }
+
+  const isAuthenticated = await verifyAdminSession(request)
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
+  }
+
   const { searchParams } = new URL(request.url)
   const table = searchParams.get('table')
   const id = searchParams.get('id')
   const filter = searchParams.get('filter')
   const value = searchParams.get('value')
   const join = searchParams.get('join')
+
+  if (!table || !ALLOWED_TABLES.has(table)) {
+    return NextResponse.json({ error: 'Invalid table' }, { status: 400, headers: rateLimitHeaders })
+  }
 
   try {
     let selectStr = '*'
@@ -31,7 +88,8 @@ export async function GET(request: NextRequest) {
       selectStr = '*' + ',' + parts.map(t => t === '*' ? t : t.includes('(') ? t : `${t}(*)`).join(',')
     }
 
-    let query: any = adminSupabase.from(table!).select(selectStr)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = adminSupabase.from(table).select(selectStr)
 
     if (id) {
       query = query.eq('id', id).single()
@@ -40,49 +98,115 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ data })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: rateLimitHeaders })
+    return NextResponse.json({ data }, { headers: rateLimitHeaders })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500, headers: rateLimitHeaders })
   }
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`admin-write:${ip}`, 30, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
+  }
+
+  const isAuthenticated = await verifyAdminSession(request)
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
+  }
+
   const { searchParams } = new URL(request.url)
   const table = searchParams.get('table')
+
+  if (!table || !ALLOWED_TABLES.has(table)) {
+    return NextResponse.json({ error: 'Invalid table' }, { status: 400, headers: rateLimitHeaders })
+  }
+
   try {
     const body = await request.json()
-    const { data, error } = await adminSupabase.from(table!).insert(body).select()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ data })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const { data, error } = await adminSupabase.from(table).insert(body).select()
+    if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: rateLimitHeaders })
+    return NextResponse.json({ data }, { headers: rateLimitHeaders })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500, headers: rateLimitHeaders })
   }
 }
 
 export async function PUT(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`admin-write:${ip}`, 30, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
+  }
+
+  const isAuthenticated = await verifyAdminSession(request)
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
+  }
+
   const { searchParams } = new URL(request.url)
   const table = searchParams.get('table')
   const id = searchParams.get('id')
+
+  if (!table || !ALLOWED_TABLES.has(table)) {
+    return NextResponse.json({ error: 'Invalid table' }, { status: 400, headers: rateLimitHeaders })
+  }
+
+  if (!id) {
+    return NextResponse.json({ error: 'Missing id' }, { status: 400, headers: rateLimitHeaders })
+  }
+
   try {
     const body = await request.json()
-    const { data, error } = await adminSupabase.from(table!).update(body).eq('id', id).select()
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ data })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const { data, error } = await adminSupabase.from(table).update(body).eq('id', id).select()
+    if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: rateLimitHeaders })
+    return NextResponse.json({ data }, { headers: rateLimitHeaders })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500, headers: rateLimitHeaders })
   }
 }
 
 export async function DELETE(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`admin-write:${ip}`, 30, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: rateLimitHeaders })
+  }
+
+  const isAuthenticated = await verifyAdminSession(request)
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders })
+  }
+
   const { searchParams } = new URL(request.url)
   const table = searchParams.get('table')
   const id = searchParams.get('id')
+
+  if (!table || !ALLOWED_TABLES.has(table)) {
+    return NextResponse.json({ error: 'Invalid table' }, { status: 400, headers: rateLimitHeaders })
+  }
+
+  if (!id) {
+    return NextResponse.json({ error: 'Missing id' }, { status: 400, headers: rateLimitHeaders })
+  }
+
   try {
-    const { error } = await adminSupabase.from(table!).delete().eq('id', id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json({ success: true })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const { error } = await adminSupabase.from(table).delete().eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: rateLimitHeaders })
+    return NextResponse.json({ success: true }, { headers: rateLimitHeaders })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500, headers: rateLimitHeaders })
   }
 }

@@ -1,0 +1,291 @@
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  CheckCircle,
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  Download,
+  Loader2,
+} from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
+import { notify } from '@/lib/notifications'
+import { cn } from '@/lib/utils'
+
+interface LessonData {
+  id: string
+  title: string
+  content_type: string
+  video_url: string | null
+  video_id: string | null
+  pdf_url: string | null
+  text_content: string | null
+  duration_minutes: number | null
+}
+
+interface LessonPlayerProps {
+  lesson: LessonData
+  courseId: string
+  userId: string
+  userName: string
+  userEmail: string
+  isCompleted: boolean
+  onComplete: (lessonId: string) => void
+  onPrev: () => void
+  onNext: () => void
+  hasPrev: boolean
+  hasNext: boolean
+}
+
+export default function LessonPlayer({
+  lesson,
+  courseId,
+  userId,
+  userName,
+  userEmail,
+  isCompleted,
+  onComplete,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+}: LessonPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [showControls, setShowControls] = useState(true)
+  const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current)
+    }
+  }, [])
+
+  const resetControlsTimeout = () => {
+    setShowControls(true)
+    if (controlsTimeout.current) clearTimeout(controlsTimeout.current)
+    if (playing) {
+      controlsTimeout.current = setTimeout(() => setShowControls(false), 3000)
+    }
+  }
+
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return
+    const pct = Math.round(
+      (videoRef.current.currentTime / videoRef.current.duration) * 100
+    )
+    setProgress(pct)
+    setCurrentTime(videoRef.current.currentTime)
+  }
+
+  const handleLoadedMetadata = () => {
+    if (!videoRef.current) return
+    setDuration(videoRef.current.duration)
+    setLoading(false)
+  }
+
+  const togglePlay = () => {
+    if (!videoRef.current) return
+    if (videoRef.current.paused) {
+      videoRef.current.play()
+      setPlaying(true)
+      resetControlsTimeout()
+    } else {
+      videoRef.current.pause()
+      setPlaying(false)
+    }
+  }
+
+  const toggleMute = () => {
+    if (!videoRef.current) return
+    videoRef.current.muted = !videoRef.current.muted
+    setMuted(videoRef.current.muted)
+  }
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!videoRef.current) return
+    const time = (Number(e.target.value) / 100) * videoRef.current.duration
+    videoRef.current.currentTime = time
+    setProgress(Number(e.target.value))
+  }
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+    const s = Math.floor(seconds % 60)
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
+
+  const markComplete = async () => {
+    await supabase.from('lesson_progress').upsert(
+      {
+        user_id: userId,
+        lesson_id: lesson.id,
+        is_completed: true,
+        completed_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,lesson_id' }
+    )
+    notify.lessonComplete(lesson.title)
+    onComplete(lesson.id)
+  }
+
+  if (lesson.content_type === 'video') {
+    return (
+      <div>
+        <div
+          className="relative bg-slate-900 rounded-2xl overflow-hidden select-none group"
+          onMouseMove={resetControlsTimeout}
+        >
+          <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-red-600/90 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+            Protected
+          </div>
+
+          <video
+            ref={videoRef}
+            className="w-full aspect-video object-contain bg-black cursor-pointer"
+            controlsList="nodownload noplaybackrate"
+            disablePictureInPicture
+            disableRemotePlayback
+            playsInline
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onCanPlay={() => setLoading(false)}
+            onLoadStart={() => setLoading(true)}
+            onClick={togglePlay}
+          >
+            {lesson.video_url && (
+              <source src={lesson.video_url} type="video/mp4" />
+            )}
+          </video>
+
+          {loading && (
+            <div className="absolute inset-0 z-10 bg-black/50 flex items-center justify-center">
+              <Loader2 className="h-10 w-10 text-white animate-spin" />
+            </div>
+          )}
+
+          {!playing && !loading && (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 cursor-pointer"
+              onClick={togglePlay}
+            >
+              <div className="h-16 w-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors">
+                <Play className="h-7 w-7 text-slate-900 ml-1" fill="currentColor" />
+              </div>
+            </div>
+          )}
+
+          <div
+            className={cn(
+              'absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300',
+              showControls ? 'opacity-100' : 'opacity-0'
+            )}
+          >
+            <div className="mb-3">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={progress}
+                onChange={handleSeek}
+                className="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:rounded-full"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={togglePlay}
+                  className="text-white hover:text-blue-400 transition-colors"
+                >
+                  {playing ? (
+                    <Pause className="h-5 w-5" />
+                  ) : (
+                    <Play className="h-5 w-5" />
+                  )}
+                </button>
+                <button
+                  onClick={toggleMute}
+                  className="text-white hover:text-blue-400 transition-colors"
+                >
+                  {muted ? (
+                    <VolumeX className="h-5 w-5" />
+                  ) : (
+                    <Volume2 className="h-5 w-5" />
+                  )}
+                </button>
+                <span className="text-white/70 text-xs font-mono">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white/50 text-xs">{progress}%</span>
+                <button
+                  onClick={() => videoRef.current?.requestFullscreen()}
+                  className="text-white hover:text-blue-400 transition-colors"
+                >
+                  <Maximize className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (lesson.content_type === 'pdf') {
+    return (
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-red-500" />
+            <span className="font-medium text-slate-900">{lesson.title}</span>
+          </div>
+          {lesson.pdf_url && (
+            <a
+              href={lesson.pdf_url}
+              download
+              className="text-sm text-blue-600 flex items-center gap-1 hover:underline"
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </a>
+          )}
+        </div>
+        {lesson.pdf_url ? (
+          <iframe
+            src={lesson.pdf_url}
+            className="w-full h-[70vh] border-0"
+            title={lesson.title}
+          />
+        ) : (
+          <div className="p-12 text-center text-slate-500">
+            <FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+            <p>No PDF available for this lesson</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-6">
+      <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+        {lesson.text_content || 'No content available for this lesson.'}
+      </p>
+    </div>
+  )
+}

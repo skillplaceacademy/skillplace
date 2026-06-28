@@ -47,7 +47,7 @@ export default function AdminLayout({
           return
         }
 
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
@@ -55,18 +55,26 @@ export default function AdminLayout({
 
         if (cancelled) return
 
-        if (profileError) {
-          setError('Failed to load profile: ' + profileError.message)
-          setLoading(false)
-          return
-        }
-
         if (profile && profile.role === 'admin') {
           setAdminUser(profile)
+        } else {
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('role')
+            .eq('email', user.email)
+            .single()
+
+          if (employee?.role === 'admin') {
+            setAdminUser({ id: user.id, email: user.email || '', full_name: user.user_metadata?.full_name || null, role: 'admin' })
+          } else {
+            setError('Access denied. Admin privileges required.')
+            setLoading(false)
+            return
+          }
         }
 
         setLoading(false)
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setError('Session check failed. Please refresh the page.')
           setLoading(false)

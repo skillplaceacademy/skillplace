@@ -1,15 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { notify } from '@/lib/notifications'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,10 +30,21 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
+  const searchParams = useSearchParams()
+  const redirectedFrom = searchParams.get('redirectedFrom') || '/'
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    const clientIp = '127.0.0.1'
+    const rateCheck = checkRateLimit(clientIp, 5, 15 * 60 * 1000)
+    if (!rateCheck.allowed) {
+      setError('Too many login attempts. Please try again in 15 minutes.')
+      setLoading(false)
+      return
+    }
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -38,11 +58,15 @@ export default function LoginPage() {
       return
     }
 
-    // Session is automatically stored in cookies by the Supabase client storage adapter
-
-    // Check user role and redirect accordingly
     if (data.user) {
       notify.loginSuccess(data.user.user_metadata?.full_name || data.user.email)
+
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      }).catch(() => {})
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -52,10 +76,20 @@ export default function LoginPage() {
       if (profile?.role === 'admin' || profile?.role === 'employee') {
         window.location.href = '/admin-place'
       } else {
-        window.location.href = '/'
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('role')
+          .eq('email', data.user.email)
+          .single()
+
+        if (employee?.role === 'admin' || employee?.role === 'employee') {
+          window.location.href = '/admin-place'
+        } else {
+          window.location.href = redirectedFrom
+        }
       }
     } else {
-      window.location.href = '/'
+      window.location.href = redirectedFrom
     }
   }
 
@@ -95,7 +129,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-700 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         <div className="relative flex flex-col justify-center px-12 xl:px-16">
@@ -130,7 +163,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-12 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">

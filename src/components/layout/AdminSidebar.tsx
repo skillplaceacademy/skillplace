@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BookOpen, CreditCard, MessageSquare, LogOut, GraduationCap, Briefcase, Star, FileText, UserCog } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, CreditCard, MessageSquare, LogOut, GraduationCap, Briefcase, Star, FileText, UserCog, Tag, Bell, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
@@ -11,10 +11,13 @@ const links = [
   { href: '/admin-place/content', label: 'Content', icon: FileText },
   { href: '/admin-place/enrollments', label: 'Enrollments', icon: GraduationCap },
   { href: '/admin-place/placements', label: 'Placements', icon: GraduationCap },
+  { href: '/admin-place/schedule', label: 'Schedule', icon: Calendar },
   { href: '/admin-place/students', label: 'Students', icon: Users },
   { href: '/admin-place/employees', label: 'Employees', icon: UserCog },
   { href: '/admin-place/leads', label: 'Leads', icon: MessageSquare },
   { href: '/admin-place/testimonials', label: 'Testimonials', icon: Star },
+  { href: '/admin-place/coupons', label: 'Coupons', icon: Tag },
+  { href: '/admin-place/notifications', label: 'Notifications', icon: Bell },
   { href: '/admin-place/payments', label: 'Payments', icon: CreditCard },
 ]
 

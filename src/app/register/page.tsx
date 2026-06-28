@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, User, Mail, Phone, Lock, ArrowRight, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { GraduationCap, User, Mail, Phone, Lock, ArrowRight, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
+import { validatePasswordStrength } from '@/lib/auth'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -20,14 +21,21 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  const passwordStrength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3
-  const strengthColors = ['bg-slate-200', 'bg-red-500', 'bg-yellow-500', 'bg-green-500']
-  const strengthLabels = ['', 'Weak', 'Fair', 'Strong']
+  const passwordValidation = validatePasswordStrength(password)
+  const passwordStrength = password.length === 0 ? 0 : passwordValidation.errors.length === 0 ? 4 : passwordValidation.errors.length <= 2 ? 3 : passwordValidation.errors.length <= 3 ? 2 : 1
+  const strengthColors = ['bg-slate-200', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500']
+  const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong']
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.errors[0])
+      setLoading(false)
+      return
+    }
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -57,7 +65,9 @@ export default function RegisterPage() {
       })
 
       if (profileError) {
-        console.error('Error creating profile:', profileError)
+        setError('Failed to create profile. Please try again.')
+        setLoading(false)
+        return
       }
 
       if (data.session) {
@@ -97,7 +107,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex">
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-700 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+        <div className="absolute inset-0 opacity-10 bg-[length:20px_20px] bg-[radial-gradient(circle,white_1px,transparent_1px)]" />
         <div className="relative flex flex-col justify-center px-12 xl:px-16">
           <div className="flex items-center gap-3 mb-8">
             <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -199,12 +209,12 @@ export default function RegisterPage() {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a password (min 6 characters)"
+                    placeholder="Create a strong password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                   <button
                     type="button"
@@ -217,11 +227,29 @@ export default function RegisterPage() {
                 {password.length > 0 && (
                   <div className="mt-2">
                     <div className="flex gap-1.5">
-                      {[1, 2, 3].map((i) => (
+                      {[1, 2, 3, 4].map((i) => (
                         <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= passwordStrength ? strengthColors[passwordStrength] : 'bg-slate-200'}`} />
                       ))}
                     </div>
                     <p className="text-xs text-slate-500 mt-1">Password strength: {strengthLabels[passwordStrength]}</p>
+                    <div className="mt-2 space-y-1">
+                      {[
+                        { label: 'At least 8 characters', met: password.length >= 8 },
+                        { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
+                        { label: 'One lowercase letter', met: /[a-z]/.test(password) },
+                        { label: 'One number', met: /[0-9]/.test(password) },
+                        { label: 'One special character', met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password) },
+                      ].map((req) => (
+                        <div key={req.label} className="flex items-center gap-1.5">
+                          {req.met ? (
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <XCircle className="h-3 w-3 text-slate-300" />
+                          )}
+                          <span className={`text-xs ${req.met ? 'text-green-600' : 'text-slate-400'}`}>{req.label}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

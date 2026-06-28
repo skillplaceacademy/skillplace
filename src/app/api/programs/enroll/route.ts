@@ -1,20 +1,64 @@
 import { NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rateLimit = checkRateLimit(`enroll:${ip}`, 5, 60000)
+  const rateLimitHeaders = getRateLimitHeaders(rateLimit)
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: rateLimitHeaders }
+    )
+  }
+
   try {
     const body = await request.json()
-    const { full_name, email, phone, location, program_type, course_id, start_date, notes } = body
+    const { full_name, email, phone, location, program_id, start_date, notes } = body
 
-    if (!full_name || !email || !phone || !program_type || !course_id) {
+    if (!full_name || !email || !phone || !program_id) {
       return NextResponse.json(
-        { error: 'Missing required fields: full_name, email, phone, program_type, course_id' },
+        { error: 'Missing required fields: full_name, email, phone, program_id' },
         { status: 400 }
       )
     }
 
-    // Try to get authenticated user from session
+    if (typeof full_name !== 'string' || full_name.trim().length < 2) {
+      return NextResponse.json(
+        { error: 'Invalid full name' },
+        { status: 400 }
+      )
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email address' },
+        { status: 400 }
+      )
+    }
+
+    const phoneRegex = /^[+]?[\d\s\-()]{7,15}$/
+    if (!phoneRegex.test(phone)) {
+      return NextResponse.json(
+        { error: 'Invalid phone number' },
+        { status: 400 }
+      )
+    }
+
+    const { data: program } = await adminSupabase
+      .from('training_programs')
+      .select('id')
+      .eq('id', program_id)
+      .single()
+
+    if (!program) {
+      return NextResponse.json({ error: 'Program not found' }, { status: 404 })
+    }
+
     let authUserId: string | null = null
     try {
       const supabase = await createSupabaseServerClient()
@@ -26,7 +70,6 @@ export async function POST(request: Request) {
       // Not authenticated, proceed without auth user
     }
 
-    // Find or create profile by email
     let profileId: string | null = null
 
     const { data: existingProfile } = await adminSupabase
@@ -37,18 +80,15 @@ export async function POST(request: Request) {
 
     if (existingProfile) {
       profileId = existingProfile.id
-      // Update profile with program_type
       await adminSupabase
         .from('profiles')
         .update({
           full_name,
           phone,
-          program_type,
           updated_at: new Date().toISOString(),
         })
         .eq('id', profileId)
     } else {
-      // Create new profile (without auth - will need to register separately)
       const { data: newProfile, error: profileError } = await adminSupabase
         .from('profiles')
         .insert({
@@ -56,14 +96,12 @@ export async function POST(request: Request) {
           full_name,
           phone,
           role: 'student',
-          program_type,
           is_active: true,
         })
         .select('id')
         .single()
 
       if (profileError) {
-        console.error('Profile creation error:', profileError)
         return NextResponse.json(
           { error: 'Failed to create profile' },
           { status: 500 }
@@ -72,13 +110,11 @@ export async function POST(request: Request) {
       profileId = newProfile.id
     }
 
-    // Create enrollment record
     const { data: enrollment, error: enrollmentError } = await adminSupabase
       .from('enrollments')
       .insert({
         user_id: profileId,
-        course_id,
-        program_type,
+        program_id,
         status: 'pending',
         notes: notes || null,
       })
@@ -86,7 +122,6 @@ export async function POST(request: Request) {
       .single()
 
     if (enrollmentError) {
-      console.error('Enrollment error:', enrollmentError)
       return NextResponse.json(
         { error: 'Failed to create enrollment' },
         { status: 500 }
@@ -97,12 +132,11 @@ export async function POST(request: Request) {
       success: true,
       enrollment_id: enrollment.id,
       message: 'Enrollment application submitted successfully',
-    })
+    }, { headers: rateLimitHeaders })
   } catch (error: unknown) {
-    console.error('Enrollment API error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: rateLimitHeaders }
     )
   }
 }
