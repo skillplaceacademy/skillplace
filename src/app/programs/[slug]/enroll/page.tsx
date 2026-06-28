@@ -7,8 +7,9 @@ import { ArrowLeft, Check, ChevronRight, ChevronLeft, Loader2, CreditCard, Shiel
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { getRecords } from '@/lib/admin-api'
 import { supabase } from '@/lib/supabase/client'
+
+const PUBLIC_API_BASE = '/api/public'
 
 interface ProgramInfo {
   id: string
@@ -130,8 +131,10 @@ export default function EnrollPage() {
   async function fetchProgram() {
     setLoading(true)
     try {
-      const programs = await getRecords('training_programs', 'slug', slug)
-      if (!programs || programs.length === 0) {
+      const publicRes = await fetch(`${PUBLIC_API_BASE}?table=training_programs&filter=slug&value=${slug}&join=branches(*)`)
+      const publicData = await publicRes.json()
+      const programs = publicData.data || []
+      if (programs.length === 0) {
         setLoading(false)
         return
       }
@@ -139,8 +142,9 @@ export default function EnrollPage() {
       setProgram(prog)
 
       try {
-        const programCourses = await getRecords('program_courses', 'program_id', prog.id, 'courses(id,title)')
-        setCourses((programCourses || []).map((pc: { courses: Course }) => pc.courses).filter(Boolean))
+        const coursesRes = await fetch(`${PUBLIC_API_BASE}?table=program_courses&filter=program_id&value=${prog.id}&join=courses(id,title)`)
+        const coursesData = await coursesRes.json()
+        setCourses((coursesData.data || []).map((pc: { courses: Course }) => pc.courses).filter(Boolean))
       } catch {
         setCourses([])
       }

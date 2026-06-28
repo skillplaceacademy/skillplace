@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { checkRateLimit } from '@/lib/rate-limit'
 import { notify } from '@/lib/notifications'
 
 export default function LoginPage() {
@@ -38,14 +37,8 @@ function LoginForm() {
     setError('')
     setLoading(true)
 
-    const clientIp = '127.0.0.1'
-    const rateCheck = checkRateLimit(clientIp, 5, 15 * 60 * 1000)
-    if (!rateCheck.allowed) {
-      setError('Too many login attempts. Please try again in 15 minutes.')
-      setLoading(false)
-      return
-    }
-
+    // Client-side rate limiting is informational only;
+    // server-side rate limiting in /api/auth/login enforces the real limit.
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -61,7 +54,8 @@ function LoginForm() {
     if (data.user) {
       notify.loginSuccess(data.user.user_metadata?.full_name || data.user.email)
 
-      fetch('/api/auth/login', {
+      // Await the API login so the sb-access-token cookie is set before navigation
+      await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

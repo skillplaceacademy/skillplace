@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseUrl, getSupabaseServiceKey } from './supabase/config'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/rest\/v1\/?$/, '')
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const adminSupabase = createClient(supabaseUrl, serviceKey)
+const adminSupabase = createClient(getSupabaseUrl(), getSupabaseServiceKey())
 
 export async function getDueScheduledNotifications() {
   const { data, error } = await adminSupabase

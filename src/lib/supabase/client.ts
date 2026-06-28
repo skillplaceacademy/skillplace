@@ -1,13 +1,13 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseUrl, getSupabaseAnonKey } from './config'
 
-const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseUrl = rawUrl.replace(/\/rest\/v1\/?$/, '')
+const supabaseUrl = getSupabaseUrl()
+const supabaseAnonKey = getSupabaseAnonKey()
 
 if (!supabaseUrl) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
 }
 
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 if (!supabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
 }
@@ -112,8 +112,7 @@ export async function validateSession(
     .eq('id', data.user_id)
     .maybeSingle()
 
-  data.profiles = profile || null
-  return data as ValidatedSession
+  return { ...data, profiles: profile || null } as ValidatedSession
 }
 
 export async function updateSessionActivity(

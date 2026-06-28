@@ -43,6 +43,16 @@ export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; 
     fetchUnread()
   }, [])
 
+  async function handleLogout() {
+    await fetch('/api/session/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'all' }),
+    }).catch(() => {})
+    await supabase.auth.signOut()
+    window.location.href = '/'
+  }
+
   return (
     <aside className={cn(
       "sticky top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 flex flex-col shrink-0 transition-transform duration-300",
@@ -88,7 +98,7 @@ export default function StudentSidebar({ isOpen, onToggle }: { isOpen: boolean; 
         })}
       </nav>
       <div className="p-3 border-t border-slate-200">
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 w-full transition-all duration-200">
+        <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 w-full transition-all duration-200">
           <LogOut className="h-4 w-4" />
           Logout
         </button>
