@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
+import { getProgramImage } from '@/lib/utils'
 
 interface ProgramDetail {
   id: string
@@ -26,19 +27,6 @@ interface Course {
   slug: string
   duration_hours: number
   level: string
-}
-
-const getProgramImage = (branchSlug: string) => {
-  switch (branchSlug) {
-    case 'civil':
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuBT1vzuKXW6qQjTVAishbaxrRlWA-F7vsTG82Djosgf6Eti7w16DxwtLHmTRr7w8AiQVkUP3KUQ5XbLgTNe9dPJWAHz81GMa-IyYs52G9KvA-Shn2EVgORBHegaj3S_-7mLcK7DtCap4qxv17Gn1L-Cp6IsdCHXs854ZqZpu_nicG4C-nd-mT5AeGxtr6WppF1StzSZ2yXaZtBkmzxZSGCyTZJd0b2I23VQ6gqwYRYMbKtCMs_KyRgAc46ZnpS7_FR-B95L6BUPW9Q'
-    case 'mechanical':
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuCfr1IEnzP9I_R7AYw1ZoSJFwilecU9mK14evWtAVbb7q5P1sUCfRIj-2sGgA3dI0RV-ySXqHm3XCa6TalR9CsULV9rrFXUubhFT5gna87dsw5aR-TdQt6SxHyC6VoqNMR_90w_vs6B3WopVKELN1uB2-IG5JMWWXQrDHOCCRuctUQyOJm9od2GD97WpdUbmehiZ_NW02SVpeANqvGKqaZ9evCzHqkgQD81XydS9KwIOiPsKeLM72fCVp2yud0I-urN6UVgd6FpRIA'
-    case 'electrical':
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuBauobEMw54ql_bZaJj0KgmK7mJs-aO9AjoRYINScZMwFFr6F0yA2Qo1wKmtjNj_qS8nl4K9D-Fei3PiBGcvnSi8O5oTev8RhEQwvXX1SauNHOyKgpv6VkY6FmJqWAzXVfEZQ2UDjX3K-ZkdbqOX1saJMERN-9hUu3J2NCMVDvxWZn_IyARueGV5BhxIANHfL_fpvE2IYQ3E9B4F4dk-asu5d30CitNXLvqy8le-NAiKJTJxlCWAkAL-H_-oDTxsQ9dV9sV8s9r8dI'
-    default:
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuDcs9K0RXUc57PWm4OrdiBJspBG3ooUoKxRVlnTC6KuTT5JkKbAakvw1sGaQYVnf4ftEJBEQciuK8Vvo0jk7gTHyWHti7ttpSZppg4Zar5u3btegypTgpv765AfApFsPzjszb_cyxjw-LJXLfrm1t0zylYcVJb0VhQFo7Sqdc7kOw_klMAZA1olnNsrgTj7xx3kIdnC_6jVIqogLepFOEJl8JdBvNBGZN86PPCPA2RpNWviyGnqZKa5SkBqQ9DEA7PxW86AjVX4Xz8'
-  }
 }
 
 export default function ProgramDetailPage() {

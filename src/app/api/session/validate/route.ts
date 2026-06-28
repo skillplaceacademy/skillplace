@@ -16,9 +16,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
+  // Query profiles table for authoritative role (JWT role may be stale)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
   return NextResponse.json({
     id: user.id,
     email: user.email,
-    role: user.role,
+    role: profile?.role || 'student',
   })
 }

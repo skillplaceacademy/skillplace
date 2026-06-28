@@ -70,6 +70,12 @@ export default function Navbar() {
   }, [])
 
   async function handleLogout() {
+    // Revoke all sessions for this user in DB
+    await fetch('/api/session/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'all' }),
+    }).catch(() => {})
     await supabase.auth.signOut()
     notify.logoutSuccess()
     window.location.href = '/'

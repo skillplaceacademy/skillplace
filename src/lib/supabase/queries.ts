@@ -168,28 +168,4 @@ export async function getRecentPayments() {
   return data || []
 }
 
-export async function getStudentEnrollments(userId: string) {
-  const { data, error } = await adminSupabase
-    .from('enrollments')
-    .select('*, training_programs(name, slug)')
-    .eq('user_id', userId)
-    .order('enrolled_at', { ascending: false })
 
-  if (error) {
-    return []
-  }
-  return data || []
-}
-
-export async function getStudentPurchases(userId: string) {
-  const { data, error } = await adminSupabase
-    .from('purchases')
-    .select('*, courses(title, slug, thumbnail_url)')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    return []
-  }
-  return data || []
-}

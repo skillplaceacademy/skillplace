@@ -97,13 +97,4 @@ export async function getCurrentSession(): Promise<ValidatedSession | null> {
   return session as ValidatedSession
 }
 
-export async function getSession() {
-  const { data: { session } } = await supabase.auth.getSession()
-  return session
-}
 
-export async function getUserProfile(userId: string) {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).limit(1)
-  if (error) throw error
-  return data && data.length > 0 ? data[0] : null
-}

@@ -1,22 +1,8 @@
 import Link from 'next/link'
 import { getCourses, getTestimonials, getTrainingPrograms } from '@/lib/supabase/queries'
+import { getProgramImage } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
-
-const getProgramImage = (branchSlug: string) => {
-  switch (branchSlug) {
-    case 'civil':
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuD1zwIvsJyShDXvkg2QuS4UK5aYqA1iiqrI-7niuVokAGGrQHy5JXL8vik3aFIxUUZooV8HefabiK4k7ScvvoHIgU6ke03zenNNdzfj7dlrgF50MwVIzUbDHDDpGp7pegfzqrAob-hFOdrS-5vJ7I2msyXrxgMUK3UY-2KDAmPOUb1zaAgNmn-llePQsw7kwLZRHqWp8bfmv_DjSQrZ1jVrGTr0yqg3JFsKJUM73JYP_fF-2dxiEMB8PMZa_N9wuj0IgbovtGegz58';
-    case 'mechanical':
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvhSMqXf8G9pR6_b9ccZAMBGTZzLZoou1zzFiZe9L0XFdCkkMAIJy-T-VjrBRMIo5y-lPzfYNCJxyQ7588jjL0OAMuVglVGxRUIPScUUHaQnPXOfFHeMITsj5NYVhRyTH5Y-z5B59Cvtw0b6ncDVM3WMpQvrTYLJnjGq6fJNt97WCAuWFOGwdSySPrv2R9NkuA3ekEWv40gf68rkGao1PEReBZUV8wa3QhgkfaJuqVYmjTmaMN4Wrz5icowA4K3303f9tawp8CUxg';
-    case 'electronics':
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJh3ehcq0B6ONNBQkl4eOVQPIVbMwmFd432Klcncer-NjdfoIPWVYOwnlj8wsS8KzocJwRPyRYcdKobCTKknITw70KXsG9P_H54c26RRRTzbuiFykPSq0KcQ3VaxtWYJ3BJt9Rabcnsl5OZuKRYDqkiGnRlZYx4Yp1tQGTCteJXWDIrYmiV5AxpAB7gcZLwjRspxa_kwLI1Jb8mlCKz-UqKyAhgsLqMCh2qha6vMPGMyZ7UF49L6zxebBP3tU1CcuVjxouQoRH2kU';
-    case 'electrical':
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuBauobEMw54ql_bZaJj0KgmK7mJs-aO9AjoRYINScZMwFFr6F0yA2Qo1wKmtjNj_qS8nl4K9D-Fei3PiBGcvnSi8O5oTev8RhEQwvXX1SauNHOyKgpv6VkY6FmJqWAzXVfEZQ2UDjX3K-ZkdbqOX1saJMERN-9hUu3J2NCMVDvxWZn_IyARueGV5BhxIANHfL_fpvE2IYQ3E9B4F4dk-asu5d30CitNXLvqy8le-NAiKJTJxlCWAkAL-H_-oDTxsQ9dV9sV8s9r8dI';
-    default:
-      return 'https://lh3.googleusercontent.com/aida-public/AB6AXuD1zwIvsJyShDXvkg2QuS4UK5aYqA1iiqrI-7niuVokAGGrQHy5JXL8vik3aFIxUUZooV8HefabiK4k7ScvvoHIgU6ke03zenNNdzfj7dlrgF50MwVIzUbDHDDpGp7pegfzqrAob-hFOdrS-5vJ7I2msyXrxgMUK3UY-2KDAmPOUb1zaAgNmn-llePQsw7kwLZRHqWp8bfmv_DjSQrZ1jVrGTr0yqg3JFsKJUM73JYP_fF-2dxiEMB8PMZa_N9wuj0IgbovtGegz58';
-  }
-}
 
 const renderBadge = (type: string) => {
   switch (type) {
@@ -113,7 +99,7 @@ export default async function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-surface text-on-surface opacity-100 translate-y-0 transition-all duration-700">
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-surface text-on-surface">
         <div className="relative w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/20 border border-secondary/30 backdrop-blur-sm mb-8">
@@ -158,7 +144,7 @@ export default async function Home() {
       </div>
 
       {/* Our Training Programs */}
-      <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto transition-all duration-700 opacity-100 translate-y-0" id="programs">
+      <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto" id="programs">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
           <div className="max-w-2xl">
             <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">Our Training Programs</h2>
@@ -320,7 +306,7 @@ export default async function Home() {
       </section>
 
       {/* Job-Oriented Courses (Bento Style) */}
-      <section className="py-section-gap bg-surface-container-low transition-all duration-700 opacity-100 translate-y-0">
+      <section className="py-section-gap bg-surface-container-low">
         <div className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">Job-Oriented Courses</h2>
@@ -419,7 +405,7 @@ export default async function Home() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto transition-all duration-700 opacity-100 translate-y-0">
+      <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-8">Why Choose Skillplace Academy?</h2>
@@ -476,7 +462,7 @@ export default async function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-section-gap bg-primary-container text-white overflow-hidden relative transition-all duration-700 opacity-100 translate-y-0">
+      <section className="py-section-gap bg-primary-container text-white overflow-hidden relative">
         <div className="relative px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16">
           <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg mb-4">What Our Students Say</h2>
           <p className="font-body-md text-white">Hear from students who transformed their careers at Skillplace Academy</p>
@@ -509,7 +495,7 @@ export default async function Home() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-section-gap px-margin-mobile md:px-margin-desktop transition-all duration-700 opacity-100 translate-y-0">
+      <section className="py-section-gap px-margin-mobile md:px-margin-desktop">
         <div className="max-w-container-max mx-auto bg-secondary rounded-[2rem] p-12 md:p-24 relative overflow-hidden text-center">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/10 to-transparent opacity-50"></div>
           <div className="relative z-10">
@@ -522,33 +508,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Script for Scroll Animations */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            if (typeof window !== 'undefined') {
-              const observerOptions = {
-                threshold: 0.1
-              };
-
-              const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                  if (entry.isIntersecting) {
-                    entry.target.classList.add('opacity-100', 'translate-y-0');
-                    entry.target.classList.remove('opacity-0', 'translate-y-8');
-                  }
-                });
-              }, observerOptions);
-
-              document.querySelectorAll('section').forEach(section => {
-                section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
-                observer.observe(section);
-              });
-            }
-          `,
-        }}
-      />
     </>
   )
 }

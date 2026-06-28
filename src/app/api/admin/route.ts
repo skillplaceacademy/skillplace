@@ -27,19 +27,46 @@ const ALLOWED_TABLES = new Set([
 
 async function verifyAdminSession(request: NextRequest): Promise<boolean> {
   const supabaseAccessToken = request.cookies.get('sb-access-token')?.value
+  const supabaseRefreshToken = request.cookies.get('sb-refresh-token')?.value
   if (!supabaseAccessToken) return false
 
   try {
-    const { data: { user }, error } = await adminSupabase.auth.getUser(supabaseAccessToken)
+    let { data: { user }, error } = await adminSupabase.auth.getUser(supabaseAccessToken)
+
+    // If token expired, try to refresh using the refresh token
+    if (error && supabaseRefreshToken) {
+      try {
+        const refreshed = await adminSupabase.auth.refreshSession({ refresh_token: supabaseRefreshToken })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const refreshedUser = (refreshed as any)?.data?.user
+        if (refreshedUser) {
+          user = refreshedUser
+          error = null
+        }
+      } catch {
+        // refresh failed, fall through to false
+      }
+    }
+
     if (error || !user) return false
 
+    // Check profiles table first
     const { data: profile } = await adminSupabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    return profile?.role === 'admin'
+    if (profile?.role === 'admin') return true
+
+    // Fallback: check employees table (admins may not have a profile entry)
+    const { data: employee } = await adminSupabase
+      .from('employees')
+      .select('role')
+      .eq('email', user.email)
+      .single()
+
+    return employee?.role === 'admin'
   } catch {
     return false
   }

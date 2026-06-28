@@ -1,12 +1,12 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { ArrowLeft, Save, Trash2 } from 'lucide-react'
+import { ArrowLeft, Save, Trash2, Upload, Film, CheckCircle, Loader2, X, AlertCircle } from 'lucide-react'
 import { getRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 
@@ -16,6 +16,10 @@ interface DbLesson {
   title: string
   content: string | null
   video_url: string | null
+  video_id: string | null
+  r2_source_key: string | null
+  r2_original_filename: string | null
+  stream_status: string | null
   duration_minutes: number | null
   order_index: number | null
   is_free: boolean | null
@@ -42,6 +46,12 @@ export default function LessonEditorPage() {
     is_free: false,
     is_active: true,
   })
+  // Video upload state
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'processing' | 'ready' | 'error'>('idle')
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState('')
+  const [streamVideoId, setStreamVideoId] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchLesson = useCallback(async () => {
     try {
@@ -59,6 +69,12 @@ export default function LessonEditorPage() {
           is_free: data.is_free || false,
           is_active: data.is_active !== false,
         })
+        setStreamVideoId(data.video_id || null)
+        if (data.r2_source_key && (data.stream_status === 'uploaded' || data.stream_status === 'ready')) {
+          setUploadState('ready')
+        } else if (data.stream_status === 'processing') {
+          setUploadState('processing')
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load lesson')
@@ -70,6 +86,77 @@ export default function LessonEditorPage() {
   useEffect(() => {
     fetchLesson()
   }, [fetchLesson])
+
+  async function handleVideoUpload(file: File) {
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024 * 1024) {
+      setUploadError('File too large (max 2GB)')
+      return
+    }
+
+    setUploadState('uploading')
+    setUploadProgress(0)
+    setUploadError('')
+
+    try {
+      // Step 1: Get presigned R2 upload URL
+      const presignRes = await fetch('/api/video/r2-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId,
+          filename: file.name,
+          contentType: file.type || 'video/mp4',
+        }),
+      })
+
+      if (!presignRes.ok) {
+        const err = await presignRes.json()
+        throw new Error(err.error || 'Failed to get upload URL')
+      }
+
+      const { uploadUrl, key } = await presignRes.json()
+
+      // Step 2: Upload directly to R2 via presigned URL (with progress)
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', uploadUrl, true)
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4')
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100))
+          }
+        }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve()
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`))
+          }
+        }
+
+        xhr.onerror = () => reject(new Error('Upload failed'))
+        xhr.send(file)
+      })
+
+      // Step 3: Save R2 key to lesson record
+      await updateRecord('lessons', lessonId, {
+        r2_source_key: key,
+        r2_original_filename: file.name,
+        stream_status: 'uploaded',
+        video_url: `r2://${key}`,
+      })
+
+      setUploadState('ready')
+      fetchLesson()
+      notify.lessonUpdated()
+    } catch (err: unknown) {
+      setUploadState('error')
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    }
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -182,14 +269,97 @@ export default function LessonEditorPage() {
             />
           </div>
 
+          {/* Video Upload - R2 + Cloudflare Stream */}
           <div>
-            <label className="text-sm font-medium text-slate-700">Video URL</label>
-            <Input
-              value={formData.video_url}
-              onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-              className="border-slate-300 mt-1"
-              placeholder="YouTube or video URL (optional)"
-            />
+            <label className="text-sm font-medium text-slate-700">Course Video</label>
+            <div className="mt-1 space-y-3">
+              {/* Current video status */}
+              {streamVideoId && uploadState === 'ready' && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+                  <span className="text-sm text-green-700">Video uploaded to R2</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto text-red-500 hover:text-red-700 h-6"
+                    onClick={async () => {
+                      await updateRecord('lessons', lessonId, {
+                        video_id: null,
+                        r2_source_key: null,
+                        r2_original_filename: null,
+                        stream_status: 'pending',
+                        video_url: null,
+                      })
+                      setStreamVideoId(null)
+                      setUploadState('idle')
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+
+              {uploadState === 'processing' && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                  <Loader2 className="h-4 w-4 text-blue-600 animate-spin shrink-0" />
+                  <span className="text-sm text-blue-700">Uploading video...</span>
+                </div>
+              )}
+
+              {uploadState === 'uploading' && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-slate-600">Uploading to R2...</span>
+                    <span className="text-sm font-medium text-slate-700">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {uploadState === 'error' && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                  <span className="text-sm text-red-700">{uploadError}</span>
+                </div>
+              )}
+
+              {/* Upload button */}
+              {(uploadState === 'idle' || uploadState === 'error') && (
+                <div
+                  className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    const file = e.dataTransfer.files[0]
+                    if (file) handleVideoUpload(file)
+                  }}
+                >
+                  <Film className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                  <p className="text-sm text-slate-600">
+                    <span className="text-blue-600 font-medium">Click to upload</span> or drag & drop
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">MP4, MOV, WebM up to 2GB</p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime,video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleVideoUpload(file)
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

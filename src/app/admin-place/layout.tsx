@@ -101,6 +101,12 @@ export default function AdminLayout({
   }, [loading])
 
   const handleLogout = async () => {
+    // Revoke all sessions for this user in DB
+    await fetch('/api/session/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'all' }),
+    }).catch(() => {})
     await supabase.auth.signOut()
     setAdminUser(null)
     router.push('/')

@@ -10,12 +10,33 @@ CREATE TABLE IF NOT EXISTS public.lessons (
   title TEXT NOT NULL,
   content TEXT,
   video_url TEXT,
+  video_id TEXT,
+  r2_source_key TEXT,
+  r2_original_filename TEXT,
+  stream_status TEXT DEFAULT 'pending',
   duration_minutes INTEGER,
   order_index INTEGER DEFAULT 0,
   is_free BOOLEAN DEFAULT false,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add columns if table already exists (idempotent migration)
+DO $$ BEGIN
+  ALTER TABLE public.lessons ADD COLUMN IF NOT EXISTS video_id TEXT;
+EXCEPTION WHEN duplicate_column THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.lessons ADD COLUMN IF NOT EXISTS r2_source_key TEXT;
+EXCEPTION WHEN duplicate_column THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.lessons ADD COLUMN IF NOT EXISTS r2_original_filename TEXT;
+EXCEPTION WHEN duplicate_column THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.lessons ADD COLUMN IF NOT EXISTS stream_status TEXT DEFAULT 'pending';
+EXCEPTION WHEN duplicate_column THEN null; END $$;
 
 -- RLS
 ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
@@ -32,3 +53,4 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_lessons_module ON public.lessons(module_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_video_id ON public.lessons(video_id) WHERE video_id IS NOT NULL;
