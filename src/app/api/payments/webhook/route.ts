@@ -32,27 +32,87 @@ export async function POST(request: NextRequest) {
           .from('payments')
           .update({
             razorpay_payment_id: paymentId,
+            razorpay_signature: payment.signature || null,
             status: 'completed',
             updated_at: new Date().toISOString(),
           })
           .eq('id', paymentRecord.id)
 
-        const { data: existingEnrollment } = await adminSupabase
-          .from('enrollments')
-          .select('id')
-          .eq('user_id', paymentRecord.user_id)
-          .eq('program_id', paymentRecord.program_id)
-          .limit(1)
-          .maybeSingle()
+        // Resolve user_id if null (program payments may not have it at creation time)
+        let resolvedUserId = paymentRecord.user_id
+        if (!resolvedUserId) {
+          // Try to find profile by email from Razorpay notes
+          const email = payment.notes?.email
+          if (email) {
+            const { data: profile } = await adminSupabase
+              .from('profiles')
+              .select('id')
+              .eq('email', email)
+              .single()
+            if (profile) {
+              resolvedUserId = profile.id
+              await adminSupabase
+                .from('payments')
+                .update({ user_id: resolvedUserId })
+                .eq('id', paymentRecord.id)
+            }
+          }
+        }
 
-        if (!existingEnrollment) {
-          await adminSupabase.from('enrollments').insert({
-            user_id: paymentRecord.user_id,
-            program_id: paymentRecord.program_id,
-            branch_id: null,
-            status: 'active',
-            program_type: 'online',
-          })
+        // Course enrollment
+        if (paymentRecord.course_id && resolvedUserId) {
+          const { data: existingEnrollment } = await adminSupabase
+            .from('course_enrollments')
+            .select('id')
+            .eq('user_id', resolvedUserId)
+            .eq('course_id', paymentRecord.course_id)
+            .limit(1)
+            .maybeSingle()
+
+          if (!existingEnrollment) {
+            await adminSupabase.from('course_enrollments').insert({
+              user_id: resolvedUserId,
+              course_id: paymentRecord.course_id,
+              status: 'active',
+            })
+          }
+        }
+
+        // Program enrollment
+        if (paymentRecord.program_id && resolvedUserId) {
+          const { data: existingEnrollment } = await adminSupabase
+            .from('enrollments')
+            .select('id')
+            .eq('user_id', resolvedUserId)
+            .eq('program_id', paymentRecord.program_id)
+            .limit(1)
+            .maybeSingle()
+
+          if (!existingEnrollment) {
+            await adminSupabase.from('enrollments').insert({
+              user_id: resolvedUserId,
+              program_id: paymentRecord.program_id,
+              branch_id: null,
+              status: 'active',
+              program_type: 'online',
+            })
+          }
+        }
+
+        // Increment coupon used_count if coupon was used
+        if (paymentRecord.coupon_id) {
+          const { data: coupon } = await adminSupabase
+            .from('coupons')
+            .select('used_count')
+            .eq('id', paymentRecord.coupon_id)
+            .single()
+
+          if (coupon) {
+            await adminSupabase
+              .from('coupons')
+              .update({ used_count: (coupon.used_count || 0) + 1, updated_at: new Date().toISOString() })
+              .eq('id', paymentRecord.coupon_id)
+          }
         }
       }
     }
