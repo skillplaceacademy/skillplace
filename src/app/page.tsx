@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getCourses, getTestimonials, getTrainingPrograms } from '@/lib/supabase/queries'
 import { getProgramImage } from '@/lib/utils'
 import ScrollProgress from '@/components/home/ScrollProgress'
+import HeroSection from '@/components/home/HeroSection'
 import TrustIndicators from '@/components/home/TrustIndicators'
 import WhyChooseUs from '@/components/home/WhyChooseUs'
 import StudentJourney from '@/components/home/StudentJourney'
@@ -95,49 +96,9 @@ export default async function Home() {
       <ScrollProgress />
 
       {/* ═══════════════════════════════════════════
-          1. HERO SECTION
+          1. HERO SECTION (Premium Dark)
           ═══════════════════════════════════════════ */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-surface text-on-surface">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-secondary/3 rounded-full blur-3xl" />
-        </div>
-
-        <div className="relative w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/20 border border-secondary/30 backdrop-blur-sm mb-8">
-              <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-              <span className="text-on-surface text-caption font-bold tracking-wider uppercase">Practical Training \u2022 Real Projects \u2022 Real Careers</span>
-            </div>
-
-            <h1 className="font-display-lg text-5xl md:text-7xl mb-4 leading-tight font-extrabold text-primary">
-              Skillplace Academy
-            </h1>
-            <h2 className="font-display-lg text-headline-lg md:text-headline-lg text-secondary font-bold mb-6">
-              Build Skills. Build Career.
-            </h2>
-            <p className="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-2xl">
-              Learn industry-ready skills through practical training, real-world projects, expert mentorship, and career guidance.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/courses"
-                className="bg-secondary text-white px-8 py-4 rounded-xl font-label-md text-label-md font-bold flex items-center justify-center gap-2 hover:bg-secondary/90 transition-all shadow-lg shadow-secondary/20"
-              >
-                Explore Courses
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </Link>
-              <Link
-                href="/register"
-                className="border border-outline px-8 py-4 rounded-xl font-label-md text-label-md font-bold flex items-center justify-center gap-2 hover:bg-surface-container transition-all text-on-surface"
-              >
-                Start Learning
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* ═══════════════════════════════════════════
           2. TRUST INDICATORS
