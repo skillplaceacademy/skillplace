@@ -9,24 +9,37 @@ const inter = Inter({ subsets: ["latin"] })
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] })
 
 export const metadata: Metadata = {
-  title: "Skillplace Academy - Become Job Ready Engineer in 90 Days",
-  description: "Learn Civil, Mechanical, Electrical, Electronics skills with live classes, projects, and placement assistance.",
-  keywords: ["engineering courses", "civil engineering", "mechanical engineering", "electrical engineering", "electronics", "AutoCAD", "Revit", "SolidWorks", "PLC training", "Bilaspur"],
+  title: "Skillplace Academy - Build Skills. Build Career.",
+  description: "Learn industry-ready engineering skills through practical training, real-world projects, expert mentorship, and career guidance. Civil, Mechanical, Electrical & Electronics programs with 100% placement assistance.",
+  keywords: ["engineering courses", "civil engineering", "mechanical engineering", "electrical engineering", "electronics", "AutoCAD", "Revit", "SolidWorks", "PLC training", "placement assistance", "Bilaspur", "skill training India"],
   authors: [{ name: "Skillplace Academy" }],
   openGraph: {
-    title: "Skillplace Academy - Become Job Ready Engineer in 90 Days",
-    description: "Learn Civil, Mechanical, Electrical, Electronics skills with live classes, projects, and placement assistance.",
+    title: "Skillplace Academy - Build Skills. Build Career.",
+    description: "Learn industry-ready engineering skills through practical training, real-world projects, expert mentorship, and 100% placement assistance.",
     type: "website",
     locale: "en_IN",
     siteName: "Skillplace Academy",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Skillplace Academy - Become Job Ready Engineer in 90 Days",
-    description: "Learn engineering skills with live classes, projects, and placement assistance.",
+    title: "Skillplace Academy - Build Skills. Build Career.",
+    description: "Practical engineering training with real projects, industry mentors, and placement support.",
   },
   alternates: {
     canonical: "https://skillplaceacademy.com",
+  },
+}
+
+export const faqMetadata = {
+  title: "Frequently Asked Questions | Skillplace Academy",
+  description: "Common questions about admissions, courses, certifications, online vs offline classes, placement support, and career guidance at Skillplace Academy.",
+  keywords: ["admissions faq", "engineering course questions", "placement support", "skillplace academy certification", "online engineering course"],
+  openGraph: {
+    title: "Frequently Asked Questions | Skillplace Academy",
+    description: "Get answers to common questions about admissions, courses, certifications, placements, and more.",
+    type: "website",
+    locale: "en_IN",
+    siteName: "Skillplace Academy",
   },
 }
 
@@ -48,7 +61,7 @@ export default function RootLayout({
       <body className={`${inter.className} ${jakarta.className}`}>
         <Toaster position="top-right" richColors closeButton duration={4000} />
         <Navbar />
-        <main className="min-h-screen pt-16">{children}</main>
+        <main className="min-h-screen">{children}</main>
         <Footer />
       </body>
     </html>

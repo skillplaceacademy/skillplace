@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { GraduationCap, Mail, Phone, MapPin, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
@@ -18,9 +19,13 @@ interface Branch {
 }
 
 export default function Footer() {
+  const pathname = usePathname()
   const [branches, setBranches] = useState<Branch[]>([])
 
+  const isDashboard = pathname.startsWith('/admin-place') || pathname.startsWith('/student') || pathname.includes('/learn')
+
   useEffect(() => {
+    if (isDashboard) return
     async function fetchBranches() {
       const { data } = await supabase
         .from('branches')
@@ -33,7 +38,9 @@ export default function Footer() {
       }
     }
     fetchBranches()
-  }, [])
+  }, [isDashboard])
+
+  if (isDashboard) return null
 
   return (
     <footer className="bg-slate-900 text-slate-300">
@@ -125,12 +132,19 @@ export default function Footer() {
       <div className="border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} Skillplace Academy. All rights reserved.
-            </p>
-            <p className="text-xs text-slate-600">
-              Sponsored by Autommensor Automation Pvt. Ltd. | Industry Partner: himanshu construction
-            </p>
+            <div>
+              <p className="text-sm text-slate-500">
+                &copy; {new Date().getFullYear()} Skillplace Academy. All rights reserved.
+              </p>
+              <p className="text-xs text-slate-600 mt-1">
+                Sponsored by Autommensor Automation Pvt. Ltd. | Industry Partner: himanshu construction
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <span className="text-slate-700">|</span>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
+            </div>
           </div>
         </div>
       </div>

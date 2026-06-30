@@ -1,8 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,18 +12,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
-import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Loader2, BookOpen, ChevronRight, Clock, CheckCircle } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Loader2 } from 'lucide-react'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [enrollments, setEnrollments] = useState<any[]>([])
-  const [enrollmentsLoading, setEnrollmentsLoading] = useState(true)
   const [formData, setFormData] = useState({
     full_name: '',
-    phone: '',
+    phoneCode: '+91',
+    phoneNumber: '',
     date_of_birth: '',
     gender: '',
     location: '',
@@ -35,7 +32,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile()
-    fetchEnrollments()
   }, [])
 
   async function fetchProfile() {
@@ -53,9 +49,20 @@ export default function ProfilePage() {
 
     if (data) {
       setProfile(data)
+      // Parse phone: extract country code if present
+      let phoneCode = '+91'
+      let phoneNumber = data.phone || ''
+      if (phoneNumber) {
+        const match = phoneNumber.match(/^\+(\d{1,4})/)
+        if (match) {
+          phoneCode = `+${match[1]}`
+          phoneNumber = phoneNumber.slice(match[0].length)
+        }
+      }
       setFormData({
         full_name: data.full_name || '',
-        phone: data.phone || '',
+        phoneCode,
+        phoneNumber,
         date_of_birth: data.date_of_birth || '',
         gender: data.gender || '',
         location: data.location || '',
@@ -66,28 +73,6 @@ export default function ProfilePage() {
     setLoading(false)
   }
 
-  async function fetchEnrollments() {
-    setEnrollmentsLoading(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setEnrollmentsLoading(false)
-        return
-      }
-
-      const { data } = await supabase
-        .from('enrollments')
-        .select('*, training_programs(name, slug, duration_weeks, program_type)')
-        .eq('user_id', user.id)
-        .order('enrolled_at', { ascending: false })
-
-      setEnrollments(data || [])
-    } catch {
-      // Enrollment fetch failed
-    }
-    setEnrollmentsLoading(false)
-  }
-
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!profile) return
@@ -95,11 +80,15 @@ export default function ProfilePage() {
     setSaving(true)
     setSuccess(false)
 
+    const fullPhone = formData.phoneNumber
+      ? `${formData.phoneCode}${formData.phoneNumber.replace(/[\s\-()]/g, '')}`
+      : null
+
     const { error } = await supabase
       .from('profiles')
       .update({
         full_name: formData.full_name,
-        phone: formData.phone,
+        phone: fullPhone,
         date_of_birth: formData.date_of_birth || null,
         gender: formData.gender || null,
         location: formData.location || null,
@@ -137,7 +126,7 @@ export default function ProfilePage() {
   // Profile completion calculation (8 editable fields)
   const completionFields = [
     { key: 'full_name', label: 'Full Name', value: formData.full_name },
-    { key: 'phone', label: 'Phone', value: formData.phone },
+    { key: 'phone', label: 'Phone', value: formData.phoneNumber ? `${formData.phoneCode} ${formData.phoneNumber}` : '' },
     { key: 'date_of_birth', label: 'Date of Birth', value: formData.date_of_birth },
     { key: 'gender', label: 'Gender', value: formData.gender },
     { key: 'location', label: 'Location', value: formData.location },
@@ -264,16 +253,40 @@ export default function ProfilePage() {
               </div>
               <div>
                 <Label htmlFor="phone" className="text-slate-700">Phone</Label>
-                <div className="relative mt-1.5">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="pl-10 border-slate-300"
-                    placeholder="+91 9876543210"
-                  />
+                <div className="flex gap-2 mt-1.5">
+                  <select
+                    value={formData.phoneCode}
+                    onChange={(e) => setFormData({ ...formData, phoneCode: e.target.value })}
+                    className="w-[120px] shrink-0 rounded-md border border-slate-300 bg-white px-2 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="+91">+91 (IN)</option>
+                    <option value="+1">+1 (US)</option>
+                    <option value="+44">+44 (UK)</option>
+                    <option value="+61">+61 (AU)</option>
+                    <option value="+971">+971 (UAE)</option>
+                    <option value="+65">+65 (SG)</option>
+                    <option value="+86">+86 (CN)</option>
+                    <option value="+81">+81 (JP)</option>
+                    <option value="+82">+82 (KR)</option>
+                    <option value="+49">+49 (DE)</option>
+                    <option value="+33">+33 (FR)</option>
+                    <option value="+966">+966 (SA)</option>
+                    <option value="+974">+974 (QA)</option>
+                    <option value="+973">+973 (BH)</option>
+                    <option value="+968">+968 (OM)</option>
+                    <option value="+965">+965 (KW)</option>
+                  </select>
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phoneNumber}
+                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                      className="pl-10 border-slate-300"
+                      placeholder="98765 43210"
+                    />
+                  </div>
                 </div>
               </div>
               <div>
@@ -400,94 +413,6 @@ export default function ProfilePage() {
             </Button>
           </div>
         </form>
-      </div>
-
-      {/* My Purchased Programs */}
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-3xl shadow-sm overflow-hidden mt-6">
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">My Purchased Programs</h2>
-              <p className="text-xs text-slate-500">{enrollments.length} program{enrollments.length !== 1 ? 's' : ''} enrolled</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-6">
-          {enrollmentsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-              <span className="ml-2 text-sm text-slate-500">Loading programs...</span>
-            </div>
-          ) : enrollments.length === 0 ? (
-            <div className="text-center py-8">
-              <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 mb-3">No programs purchased yet.</p>
-              <Link href="/programs">
-                <Button variant="outline" className="border-slate-300 text-sm">
-                  Browse Programs
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {enrollments.map((enrollment) => {
-                const program = enrollment.training_programs
-                const isActive = enrollment.status === 'active'
-                const isCompleted = enrollment.status === 'completed'
-                return (
-                  <Link
-                    key={enrollment.id}
-                    href={`/programs/${program?.slug || ''}`}
-                    className="block border border-slate-200 rounded-xl p-4 hover:bg-slate-50 hover:border-blue-200 transition-colors group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                        <span className="text-sm font-bold text-blue-600">
-                          {program?.name?.charAt(0) || '?'}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold text-slate-900 truncate">
-                            {program?.name || 'Unknown Program'}
-                          </p>
-                          {isCompleted && (
-                            <Badge className="bg-green-100 text-green-700 border-0 text-xs shrink-0">
-                              <CheckCircle className="h-3 w-3 mr-0.5" />
-                              Completed
-                            </Badge>
-                          )}
-                          {isActive && (
-                            <Badge className="bg-blue-100 text-blue-700 border-0 text-xs shrink-0">
-                              Active
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500">
-                          {program?.duration_weeks && (
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {program.duration_weeks} weeks
-                            </span>
-                          )}
-                          {program?.program_type && (
-                            <span className="capitalize">{program.program_type}</span>
-                          )}
-                          <span>Enrolled: {new Date(enrollment.enrolled_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )
