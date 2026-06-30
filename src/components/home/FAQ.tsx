@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import SectionReveal from './SectionReveal'
 
 const faqItems = [
@@ -19,14 +20,6 @@ const faqItems = [
   {
     q: 'Is placement support available?',
     a: 'Absolutely. We provide 100% placement assistance including resume building, interview preparation, mock interviews, and direct connections with hiring partners.',
-  },
-  {
-    q: 'Are classes online or offline?',
-    a: 'We offer both. Choose the format that works best for you — online for flexibility, offline for hands-on lab access, or hybrid for the best of both worlds.',
-  },
-  {
-    q: 'Do you provide career guidance?',
-    a: 'Yes, career guidance is part of our core offering. From career planning to LinkedIn optimization, freelancing guidance to startup mentorship — we cover it all.',
   },
 ]
 
@@ -82,6 +75,20 @@ export default function FAQ() {
                 </div>
               </div>
             ))}
+          </div>
+        </SectionReveal>
+
+        <SectionReveal>
+          <div className="text-center mt-10">
+            <Link
+              href="/faq"
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-primary-container text-on-primary-container font-bold text-label-md hover:bg-primary/10 transition-all group"
+            >
+              View All FAQs
+              <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
+                arrow_forward
+              </span>
+            </Link>
           </div>
         </SectionReveal>
       </div>

@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { getCourses, getTestimonials, getTrainingPrograms } from '@/lib/supabase/queries'
 import { getProgramImage } from '@/lib/utils'
 import ScrollProgress from '@/components/home/ScrollProgress'
-import HeroSection from '@/components/home/HeroSection'
 import TrustIndicators from '@/components/home/TrustIndicators'
 import WhyChooseUs from '@/components/home/WhyChooseUs'
 import StudentJourney from '@/components/home/StudentJourney'
@@ -15,6 +14,11 @@ import StudentSuccess from '@/components/home/StudentSuccess'
 import WhyTrustUs from '@/components/home/WhyTrustUs'
 import FAQ from '@/components/home/FAQ'
 import FinalCTA from '@/components/home/FinalCTA'
+
+import HeroSection from '@/components/home/HeroSection'
+import CareerPathQuiz from '@/components/home/CareerPathQuiz'
+import ConsultationBooking from '@/components/home/ConsultationBooking'
+import JobCoursesSection from '@/components/home/JobCoursesSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,6 +115,11 @@ export default async function Home() {
       <WhyChooseUs />
 
       {/* ═══════════════════════════════════════════
+          3.5 INTERACTIVE CAREER PATH FINDER QUIZ
+          ═══════════════════════════════════════════ */}
+      <CareerPathQuiz />
+
+      {/* ═══════════════════════════════════════════
           4. STUDENT JOURNEY TIMELINE
           ═══════════════════════════════════════════ */}
       <StudentJourney />
@@ -131,6 +140,11 @@ export default async function Home() {
       <CareerGuidance />
 
       {/* ═══════════════════════════════════════════
+          7.5 BOOK A FREE CAREER CONSULTATION
+          ═══════════════════════════════════════════ */}
+      <ConsultationBooking />
+
+      {/* ═══════════════════════════════════════════
           8. OUR TRAINING PROGRAMS (existing)
           ═══════════════════════════════════════════ */}
       <section className="py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto" id="programs">
@@ -145,10 +159,13 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+        <div 
+          className="flex md:grid md:grid-cols-2 lg:grid-cols-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory gap-6 pb-6"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {trainingPrograms.length > 0 ? (
             trainingPrograms.slice(0, 6).map((p: any) => (
-              <Link href={`/programs/${p.slug}`} key={p.id} className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 flex flex-col h-full block">
+              <Link href={`/programs/${p.slug}`} key={p.id} className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 flex flex-col h-full block min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always">
                 <div className="relative aspect-video">
                   <img className="w-full h-full object-cover" alt={p.name} src={getProgramImage(p.branches?.slug)} />
                   {renderBadge(p.program_type)}
@@ -168,7 +185,7 @@ export default async function Home() {
                   <div className="flex items-center justify-between border-t border-border-subtle pt-6 mt-auto">
                     <div>
                       <span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span>
-                      <span className="text-headline-md font-bold text-primary">\u20B9{p.price?.toLocaleString()}</span>
+                      <span className="text-headline-md font-bold text-primary">₹{p.price?.toLocaleString()}</span>
                     </div>
                     <div className="text-right">
                       <span className="block text-caption text-on-surface-variant uppercase font-semibold">Duration</span>
@@ -181,7 +198,7 @@ export default async function Home() {
           ) : (
             <>
               {/* Static Default Fallbacks */}
-              <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300">
+              <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always">
                 <div className="relative aspect-video">
                   <img className="w-full h-full object-cover" alt="Civil Engineering" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-engineering.jpg" />
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
@@ -196,12 +213,12 @@ export default async function Home() {
                     <li className="flex items-center gap-3 text-body-md text-on-surface-variant"><span className="material-symbols-outlined text-secondary text-[20px]">check_circle</span>Training Certificate</li>
                   </ul>
                   <div className="flex items-center justify-between border-t border-border-subtle pt-6">
-                    <div><span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span><span className="text-headline-md font-bold text-primary">\u20B929,999</span></div>
+                    <div><span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span><span className="text-headline-md font-bold text-primary">₹29,999</span></div>
                     <div className="text-right"><span className="block text-caption text-on-surface-variant uppercase font-semibold">Duration</span><span className="font-bold">24 weeks</span></div>
                   </div>
                 </div>
               </div>
-              <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300">
+              <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always">
                 <div className="relative aspect-video">
                   <img className="w-full h-full object-cover" alt="Mechanical Engineering" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-mechanical-engineering.jpg" />
                   <div className="absolute top-4 right-4 bg-secondary text-white px-3 py-1 rounded-full shadow-sm">
@@ -216,12 +233,12 @@ export default async function Home() {
                     <li className="flex items-center gap-3 text-body-md text-on-surface-variant"><span className="material-symbols-outlined text-secondary text-[20px]">check_circle</span>Hands-on Practical</li>
                   </ul>
                   <div className="flex items-center justify-between border-t border-border-subtle pt-6">
-                    <div><span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span><span className="text-headline-md font-bold text-primary">\u20B944,999</span></div>
+                    <div><span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span><span className="text-headline-md font-bold text-primary">₹44,999</span></div>
                     <div className="text-right"><span className="block text-caption text-on-surface-variant uppercase font-semibold">Duration</span><span className="font-bold">48 weeks</span></div>
                   </div>
                 </div>
               </div>
-              <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300">
+              <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always">
                 <div className="relative aspect-video">
                   <img className="w-full h-full object-cover" alt="Electronics & Automation" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-electronics-automation.jpg" />
                   <div className="absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full shadow-sm">
@@ -236,7 +253,7 @@ export default async function Home() {
                     <li className="flex items-center gap-3 text-body-md text-on-surface-variant"><span className="material-symbols-outlined text-secondary text-[20px]">check_circle</span>Site Visits</li>
                   </ul>
                   <div className="flex items-center justify-between border-t border-border-subtle pt-6">
-                    <div><span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span><span className="text-headline-md font-bold text-primary">\u20B939,999</span></div>
+                    <div><span className="block text-caption text-on-surface-variant uppercase font-semibold">Price</span><span className="text-headline-md font-bold text-primary">₹39,999</span></div>
                     <div className="text-right"><span className="block text-caption text-on-surface-variant uppercase font-semibold">Duration</span><span className="font-bold">36 weeks</span></div>
                   </div>
                 </div>
@@ -244,106 +261,24 @@ export default async function Home() {
             </>
           )}
         </div>
+        
+        {/* Mobile Swipe Cue */}
+        <div className="flex md:hidden items-center justify-center gap-1.5 mt-2 text-caption text-on-surface-variant font-semibold">
+          <span className="material-symbols-outlined text-[16px] animate-pulse">swipe</span>
+          <span>Swipe to see all training programs</span>
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════════
-          9. JOB-ORIENTED COURSES (Bento Grid)
+          9. JOB-ORIENTED COURSES (Desktop Bento & Mobile Tabs)
           ═══════════════════════════════════════════ */}
-      <section className="py-section-gap bg-surface-container-low">
-        <div className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">Job-Oriented Courses</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">Industry-focused curriculum designed for immediate employment. Learn the specific software and skills companies are hiring for.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Civil Bento */}
-            <div className="md:col-span-8 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow">
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-headline-md text-headline-md text-primary">Civil Engineering</h3>
-                  <span className="bg-surface-container-high px-4 py-1 rounded-full text-caption font-bold text-on-secondary-fixed-variant">6 Courses</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-                  {civilList.map((item, idx) => (
-                    <div className="flex items-center gap-2 text-on-surface-variant" key={idx}>
-                      <span className="w-1.5 h-1.5 bg-secondary rounded-full" /> {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <Link className="inline-flex items-center gap-2 font-bold text-secondary self-start" href="/courses">
-                Explore Civil Courses
-                <span className="material-symbols-outlined">trending_flat</span>
-              </Link>
-            </div>
-
-            {/* Mechanical Bento */}
-            <div className="md:col-span-4 bg-primary-container text-white p-8 rounded-2xl flex flex-col justify-between shadow-lg">
-              <div>
-                <h3 className="font-headline-md text-headline-md mb-6">Mechanical</h3>
-                <div className="space-y-4 mb-8">
-                  {mechanicalList.map((item, idx) => {
-                    const icons = ['settings', 'model_training', 'precision_manufacturing', 'draw', 'settings', 'draw']
-                    return (
-                      <p className="text-white/70 flex items-center gap-2" key={idx}>
-                        <span className="material-symbols-outlined text-secondary-fixed-dim">{icons[idx] || 'settings'}</span> {item}
-                      </p>
-                    )
-                  })}
-                </div>
-              </div>
-              <Link className="text-secondary-fixed-dim font-bold flex items-center gap-2 group" href="/courses">
-                Explore
-                <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-              </Link>
-            </div>
-
-            {/* Electrical Bento */}
-            <div className="md:col-span-4 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow">
-              <div>
-                <h3 className="font-headline-md text-headline-md text-primary mb-6">Electrical</h3>
-                <ul className="space-y-3 mb-8">
-                  {electricalList.map((item, idx) => (
-                    <li className="text-body-md text-on-surface-variant" key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <Link className="text-secondary font-bold flex items-center gap-2" href="/courses">
-                Explore <span className="material-symbols-outlined">open_in_new</span>
-              </Link>
-            </div>
-
-            {/* Electronics Bento */}
-            <div className="md:col-span-5 bg-white p-8 rounded-2xl border border-border-subtle flex flex-col justify-between card-shadow">
-              <div>
-                <h3 className="font-headline-md text-headline-md text-primary mb-6">Electronics &amp; Automation</h3>
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {electronicsList.map((item, idx) => (
-                    <span className="bg-surface-container px-3 py-1 rounded text-caption text-on-surface-variant" key={idx}>{item}</span>
-                  ))}
-                </div>
-              </div>
-              <Link className="text-secondary font-bold flex items-center gap-2" href="/courses">
-                Explore <span className="material-symbols-outlined">trending_flat</span>
-              </Link>
-            </div>
-
-            {/* Soft Skills Bento */}
-            <div className="md:col-span-3 bg-secondary text-white p-8 rounded-2xl flex flex-col justify-between">
-              <div>
-                <h3 className="font-headline-md text-headline-md mb-4">Soft Skills</h3>
-                <p className="text-white/80 text-body-md mb-6">Complete career preparation included in all programs.</p>
-              </div>
-              <ul className="space-y-1 mb-8 opacity-90 text-caption font-semibold">
-                {softSkillsList.map((item, idx) => (
-                  <li key={idx}>{'\u2022'} {item}</li>
-                ))}
-              </ul>
-              <Link className="text-white font-bold underline decoration-2 underline-offset-4" href="/courses">Explore More</Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <JobCoursesSection
+        civilList={civilList}
+        mechanicalList={mechanicalList}
+        electricalList={electricalList}
+        electronicsList={electronicsList}
+        softSkillsList={softSkillsList}
+      />
 
       {/* ═══════════════════════════════════════════
           10. INDUSTRY PARTNERS
@@ -368,35 +303,59 @@ export default async function Home() {
       {/* ═══════════════════════════════════════════
           14. TESTIMONIALS
           ═══════════════════════════════════════════ */}
-      <section className="py-section-gap bg-primary-container text-white overflow-hidden relative">
+      <section className="py-section-gap bg-surface text-on-surface overflow-hidden relative border-b border-border-subtle/40">
         <div className="relative px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center mb-16">
-          <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg mb-4">What Our Students Say</h2>
-          <p className="font-body-md text-white">Hear from students who transformed their careers at SkillPlace Academy</p>
+          <h2 className="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">What Our Students Say</h2>
+          <p className="font-body-md text-on-surface-variant">Hear from students who transformed their careers at SkillPlace Academy</p>
         </div>
-        <div className="relative px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div 
+          className="relative px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory gap-6 pb-6"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {testimonialsList.map((t: any) => (
-            <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:bg-white/15 transition-all flex flex-col justify-between" key={t.id}>
+            <div className="bg-white p-8 rounded-2xl border border-border-subtle hover:border-secondary/30 transition-all flex flex-col justify-between min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always card-shadow" key={t.id}>
               <div>
-                <div className="flex items-center gap-1 text-secondary-fixed-dim mb-6">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-tertiary-fixed" style={{ fontVariationSettings: `"${i < (t.rating || 5) ? 'FILL' : 'wght'} ${i < (t.rating || 5) ? '1' : '400'}` }}>
-                      star
-                    </span>
-                  ))}
+                <div className="flex items-center gap-1.5 bg-amber-500/5 border border-amber-500/20 px-3 py-1 rounded-full w-fit mb-6 shadow-sm">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <svg
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < (t.rating || 5)
+                            ? 'text-amber-500 fill-amber-500'
+                            : 'text-amber-300/40 fill-none stroke-amber-500/40'
+                        }`}
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="text-xs font-bold text-amber-700 ml-1">{(t.rating || 5).toFixed(1)}</span>
                 </div>
-                <p className="font-body-lg text-body-lg mb-10 max-w-2xl text-white">{displayReview(t.review)}</p>
+                <p className="font-body-lg text-body-lg mb-10 max-w-2xl text-on-surface-variant">{displayReview(t.review)}</p>
               </div>
               <div className="flex items-center gap-4 mt-auto">
-                <div className="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center font-bold text-white uppercase">
+                <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center font-bold text-secondary uppercase">
                   {t.student_name ? t.student_name[0] : 'S'}
                 </div>
                 <div>
-                  <p className="font-bold text-white">{t.student_name}</p>
-                  <p className="text-caption uppercase text-white/80">{t.course_name}</p>
+                  <p className="font-bold text-on-surface">{t.student_name}</p>
+                  <p className="text-caption uppercase text-on-surface-variant">{t.course_name}</p>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Mobile Swipe Cue */}
+        <div className="flex md:hidden items-center justify-center gap-1.5 mt-2 text-caption text-on-surface-variant font-semibold relative z-10">
+          <span className="material-symbols-outlined text-[16px] animate-pulse">swipe</span>
+          <span>Swipe to see all reviews</span>
         </div>
       </section>
 

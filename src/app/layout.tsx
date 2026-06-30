@@ -30,6 +30,19 @@ export const metadata: Metadata = {
   },
 }
 
+export const faqMetadata = {
+  title: "Frequently Asked Questions | Skillplace Academy",
+  description: "Common questions about admissions, courses, certifications, online vs offline classes, placement support, and career guidance at Skillplace Academy.",
+  keywords: ["admissions faq", "engineering course questions", "placement support", "skillplace academy certification", "online engineering course"],
+  openGraph: {
+    title: "Frequently Asked Questions | Skillplace Academy",
+    description: "Get answers to common questions about admissions, courses, certifications, placements, and more.",
+    type: "website",
+    locale: "en_IN",
+    siteName: "Skillplace Academy",
+  },
+}
+
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -48,7 +61,7 @@ export default function RootLayout({
       <body className={`${inter.className} ${jakarta.className}`}>
         <Toaster position="top-right" richColors closeButton duration={4000} />
         <Navbar />
-        <main className="min-h-screen pt-16">{children}</main>
+        <main className="min-h-screen">{children}</main>
         <Footer />
       </body>
     </html>

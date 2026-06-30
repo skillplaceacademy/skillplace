@@ -142,28 +142,37 @@ The layout follows a **Structured Fluid Grid** model. Content is contained withi
 Hierarchy is established through **Tonal Layering** supplemented by **Ambient Shadows**. Instead of heavy shadows, this design system uses:
 
 1.  **Level 0 (Base):** Solid white or `#F8FAFC` for page backgrounds.
-2.  **Level 1 (Cards):** White background with a 1px border in `#E2E8F0` and a very soft, diffused shadow (`0px 4px 20px rgba(15, 23, 42, 0.05)`).
-3.  **Level 2 (Interaction):** When hovering over interactive cards, the shadow deepens and the border shifts to the primary navy or secondary blue to indicate focus.
+2.  **Level 1 (Cards & Badges):** White background with a 1px border in `#E2E8F0` and a very soft, diffused shadow (`0px 4px 20px rgba(15, 23, 42, 0.05)`). Used for testimonials, industry partner logos, and stats cards.
+3.  **Level 2 (Interaction):** When hovering over interactive cards, the shadow deepens and the card translates slightly upward (`-translate-y-1`) to indicate focus.
 
-Surface colors should be used to differentiate content "buckets"—for example, the footer and "Why Choose Us" sections use the Navy surface to create a strong visual anchor at the beginning and end of the user journey.
+Major sections like "Why Students Trust Us" (Stats), "What Our Students Say" (Testimonials), and the "Final CTA" employ this light-themed depth strategy with clean white containers, high-contrast typography, and soft colored orbs to structure content elegantly without resorting to dark backgrounds.
 
-## Shapes
+## Shapes & Media Badges
 
-The design system employs a **Rounded** (0.5rem / 8px) shape language. This specific radius is chosen to soften the "industrial" feel of the navy palette without appearing overly "bubbly" or consumer-grade.
+The design system employs a **Rounded** (0.5rem / 8px) shape language, accented by more pronounced curves for media elements.
 
 - **Standard Elements:** Buttons, input fields, and small cards use the base 8px radius.
-- **Large Containers:** Hero images and large promotional sections use the `rounded-xl` (1.5rem / 24px) radius to create a contemporary, framed appearance.
-- **Status Badges:** Use a pill-shape (full radius) to distinguish them from functional UI components like buttons.
+- **Large Containers:** Hero images and large promotional sections (like the Final CTA block) use the `rounded-xl` (1.5rem / 24px) or `rounded-[2rem]` radius to create a contemporary, framed appearance.
+- **Partner Logos:** Displayed as company logo images inside a white `rounded-2xl` (16px) container with a subtle border. Automatically falls back to a colored, letter-initial badge if the logo image is missing.
+- **Mentor Profiles:** Profile photos are rendered in a clean, round `rounded-full` badge with a subtle border. Automatically falls back to a colored, letter-initial circle if the profile photo is missing.
+- **Status Badges:** Use a pill-shape (full radius) with a light tinted background (e.g., `bg-emerald-500/10 text-emerald-800` or `bg-secondary/10 text-secondary`) to distinguish status from functional components.
+
+## Animations & Micro-Interactions
+
+To maintain a premium, professional aesthetic, animations are kept highly purposeful and restrained:
+- **No Distracting Animations:** Avoid unnecessary background movements (like floating shapes, pulsing indicator dots, or continuous button shimmering).
+- **Smooth Transitions:** Use clean CSS transitions for hover states (e.g., card scaling, shadow deepening, and color shifts).
+- **Scale Adjustments:** Interactive badges and cards scale slightly (e.g., `group-hover:scale-105`) on hover to provide responsive visual feedback.
 
 ## Components
 
 ### Buttons
-- **Primary:** Deep Navy background with White text. Bold weight.
-- **Secondary:** Transparent with Accent Blue border and text.
+- **Primary:** Deep Navy background with White text or a premium blue gradient (`from-blue-600 to-blue-500`). Bold weight.
+- **Secondary:** Transparent with Accent Blue border and text, or white background with a subtle gray border for light-theme cards.
 - **CTA:** Accent Blue background with White text, used exclusively for conversion points like "Enroll Now."
 
 ### Cards
-Course cards must feature a structured internal layout: a top image container (16:9), followed by a 24px padded content area. Titles should be H3, with pricing emphasized in Navy Bold. Use icons to denote "Hybrid" or "Online" status in the top right corner.
+Course and testimonial cards feature a structured internal layout. Testimonial cards display warm amber stars (`text-amber-500`) and a soft-colored avatar fallback.
 
 ### Input Fields
 Inputs should have a 1px border in `#E2E8F0`. Upon focus, the border transitions to Accent Blue with a 2px outer glow (ring) of the same color at 20% opacity.

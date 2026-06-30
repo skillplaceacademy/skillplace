@@ -25,11 +25,14 @@ export default function CareerGuidance() {
         </SectionReveal>
 
         <SectionReveal stagger>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div 
+            className="flex md:grid md:grid-cols-2 lg:grid-cols-4 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory gap-6 pb-6"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {guidanceServices.map((service, idx) => (
               <div
                 key={idx}
-                className="p-6 rounded-2xl bg-white border border-border-subtle card-shadow hover:border-secondary/30 hover:-translate-y-1 transition-all duration-300 group"
+                className="p-6 rounded-2xl bg-white border border-border-subtle card-shadow hover:border-secondary/30 hover:-translate-y-1 transition-all duration-300 group min-w-[75vw] sm:min-w-[45vw] md:min-w-0 snap-center snap-always"
               >
                 <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-4 group-hover:bg-secondary/20 transition-colors">
                   <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: '"FILL" 1' }}>
@@ -42,6 +45,12 @@ export default function CareerGuidance() {
             ))}
           </div>
         </SectionReveal>
+        
+        {/* Mobile Swipe Cue */}
+        <div className="flex md:hidden items-center justify-center gap-1.5 mt-2 text-caption text-on-surface-variant font-semibold">
+          <span className="material-symbols-outlined text-[16px] animate-pulse">swipe</span>
+          <span>Swipe to see all career services</span>
+        </div>
       </div>
     </section>
   )

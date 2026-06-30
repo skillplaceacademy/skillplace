@@ -1,4 +1,5 @@
 'use client'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Menu, X, GraduationCap, Shield, User, LogOut, ShoppingBag, ChevronDown, Bell } from 'lucide-react'
@@ -16,6 +17,7 @@ const navLinks = [
 ]
 
 export default function Navbar() {
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -23,7 +25,10 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
+  const isDashboard = pathname.startsWith('/admin-place') || pathname.startsWith('/student') || pathname.includes('/learn')
+
   useEffect(() => {
+    if (isDashboard) return
     async function getUser() {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (authUser) {
@@ -67,7 +72,7 @@ export default function Navbar() {
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [isDashboard])
 
   async function handleLogout() {
     // Revoke all sessions for this user in DB
@@ -90,6 +95,8 @@ export default function Navbar() {
     }
     return 'U'
   }
+
+  if (isDashboard) return null
 
   return (
     <>
