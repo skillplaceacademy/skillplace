@@ -16,6 +16,12 @@ CREATE TABLE IF NOT EXISTS public.training_programs (
   discount_price INTEGER,
   duration_weeks INTEGER,
   features JSONB,
+  is_featured BOOLEAN DEFAULT false,
+  skill_level TEXT CHECK (skill_level IN ('beginner', 'intermediate', 'advanced')),
+  career_outcome TEXT,
+  student_count INTEGER DEFAULT 0,
+  rating NUMERIC(2, 1) DEFAULT 0,
+  display_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

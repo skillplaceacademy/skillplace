@@ -58,17 +58,57 @@ export async function getTrainingPrograms() {
   return data || []
 }
 
-export async function getProgramCourses(programId: string) {
+export async function getFeaturedTrainingPrograms() {
   const { data, error } = await adminSupabase
-    .from('program_courses')
-    .select('*, courses(*)')
-    .eq('program_id', programId)
-    .order('order_index', { ascending: true })
+    .from('training_programs')
+    .select('*, branches(*)')
+    .eq('is_active', true)
+    .eq('is_featured', true)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true })
 
   if (error) {
     return []
   }
-  return data || []
+
+  if (data && data.length > 0) {
+    return data
+  }
+
+  const { data: fallbackData } = await adminSupabase
+    .from('training_programs')
+    .select('*, branches(*)')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(6)
+
+  return fallbackData || []
+}
+
+export async function getProgramCourses(programId: string) {
+  const { data: links, error: linksError } = await adminSupabase
+    .from('program_courses')
+    .select('id, program_id, course_id, order_index')
+    .eq('program_id', programId)
+    .order('order_index', { ascending: true })
+
+  if (linksError || !links || links.length === 0) {
+    return []
+  }
+
+  const courseIds = links.map((l) => l.course_id).filter(Boolean)
+  const { data: courses } = await adminSupabase
+    .from('courses')
+    .select('id, title, slug, duration_hours, level, is_active')
+    .in('id', courseIds)
+
+  const courseMap = new Map((courses || []).map((c) => [c.id, c]))
+
+  return links.map((l) => ({
+    ...l,
+    courses: courseMap.get(l.course_id) || null,
+  }))
 }
 
 export async function getTestimonials() {

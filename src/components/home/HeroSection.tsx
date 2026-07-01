@@ -19,9 +19,9 @@ export default function HeroSection() {
 
             {/* Main heading */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6">
-              <span className="text-on-surface">Learn Engineering Skills</span>
+              <span className="text-on-surface">Build Skills</span>
               <br />
-              <span className="gradient-text">That Get You Hired.</span>
+              <span className="gradient-text">Builed career</span>
             </h1>
 
             {/* Subheading */}
