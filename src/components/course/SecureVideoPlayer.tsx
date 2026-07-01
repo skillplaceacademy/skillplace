@@ -229,8 +229,9 @@ export default function SecureVideoPlayer({
 
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return
-    const pct = Math.round((videoRef.current.currentTime / videoRef.current.duration) * 100)
-    setProgress(pct)
+    const dur = videoRef.current.duration
+    const pct = dur > 0 ? Math.round((videoRef.current.currentTime / dur) * 100) : 0
+    setProgress(Number.isFinite(pct) ? pct : 0)
     setCurrentTime(videoRef.current.currentTime)
 
     if (pct !== lastProgressRef.current) {
@@ -251,7 +252,7 @@ export default function SecureVideoPlayer({
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return
     if (videoRef.current.paused) {
-      videoRef.current.play()
+      videoRef.current.play().catch(() => {})
       setPlaying(true)
       resetControlsTimeout()
     } else {
@@ -268,9 +269,11 @@ export default function SecureVideoPlayer({
 
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!videoRef.current) return
-    const time = (Number(e.target.value) / 100) * videoRef.current.duration
+    const val = Number(e.target.value)
+    if (!Number.isFinite(val)) return
+    const time = (val / 100) * videoRef.current.duration
     videoRef.current.currentTime = time
-    setProgress(Number(e.target.value))
+    setProgress(val)
   }, [])
 
   const formatTime = useCallback((seconds: number) => {

@@ -10,6 +10,7 @@ import {
   VolumeX,
   Maximize,
   CheckCircle,
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   FileText,
@@ -68,6 +69,8 @@ export default function LessonPlayer({
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [effectiveUrl, setEffectiveUrl] = useState<string | null>(null)
+  const [videoError, setVideoError] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const controlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -88,10 +91,9 @@ export default function LessonPlayer({
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return
     const currentTime = videoRef.current.currentTime
-    const pct = Math.round(
-      (currentTime / videoRef.current.duration) * 100
-    )
-    setProgress(pct)
+    const dur = videoRef.current.duration
+    const pct = dur > 0 ? Math.round((currentTime / dur) * 100) : 0
+    setProgress(Number.isFinite(pct) ? pct : 0)
     setCurrentTime(currentTime)
 
     if (pct !== lastProgressRef.current) {
@@ -129,7 +131,7 @@ export default function LessonPlayer({
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return
     if (videoRef.current.paused) {
-      videoRef.current.play()
+      videoRef.current.play().catch(() => {})
       setPlaying(true)
       resetControlsTimeout()
     } else {
@@ -146,9 +148,11 @@ export default function LessonPlayer({
 
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!videoRef.current) return
-    const time = (Number(e.target.value) / 100) * videoRef.current.duration
+    const val = Number(e.target.value)
+    if (!Number.isFinite(val)) return
+    const time = (val / 100) * videoRef.current.duration
     videoRef.current.currentTime = time
-    setProgress(Number(e.target.value))
+    setProgress(val)
   }, [])
 
   const formatTime = useCallback((seconds: number) => {
@@ -175,6 +179,28 @@ export default function LessonPlayer({
     }
   }, [userId, lesson.id, lesson.title, onComplete])
 
+  useEffect(() => {
+    if (!lesson.r2_source_key) return
+    let cancelled = false
+    setEffectiveUrl(null)
+    setVideoError(false)
+    setLoading(true)
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/video/r2-playback?lessonId=${lesson.id}`)
+        if (!res.ok) throw new Error('Failed to get playback URL')
+        const data = await res.json()
+        if (!cancelled && data.playbackUrl) {
+          setEffectiveUrl(data.playbackUrl)
+          setLoading(true)
+        }
+      } catch {
+        if (!cancelled) setVideoError(true)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [lesson.id, lesson.r2_source_key])
+
   if (lesson.content_type === 'video') {
     const hasVideo = !!(lesson.video_id || lesson.video_url || lesson.r2_source_key)
 
@@ -183,9 +209,9 @@ export default function LessonPlayer({
     }
 
     const videoSource = lesson.r2_source_key
-      ? `/api/video/r2-playback?lessonId=${lesson.id}`
+      ? effectiveUrl
       : lesson.video_url?.startsWith('r2://')
-        ? `/api/video/r2-playback?lessonId=${lesson.id}`
+        ? effectiveUrl
         : lesson.video_url
 
     return (
@@ -196,6 +222,28 @@ export default function LessonPlayer({
           role="region"
           aria-label="Video player"
         >
+          {videoError && (
+            <div className="absolute inset-0 z-20 bg-slate-900 flex flex-col items-center justify-center text-center p-6">
+              <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
+              <p className="text-white font-semibold mb-1">Failed to load video</p>
+              <p className="text-slate-400 text-sm mb-4">The video could not be loaded. Please try again.</p>
+              <button
+                onClick={() => {
+                  setVideoError(false)
+                  setLoading(true)
+                  setEffectiveUrl(null)
+                  fetch(`/api/video/r2-playback?lessonId=${lesson.id}`)
+                    .then((r) => r.json())
+                    .then((d) => { if (d.playbackUrl) setEffectiveUrl(d.playbackUrl); setLoading(true) })
+                    .catch(() => setVideoError(true))
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+              >
+                Try reloading
+              </button>
+            </div>
+          )}
+
           <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-red-600/90 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
             Protected
           </div>

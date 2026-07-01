@@ -472,23 +472,6 @@ export default function CourseLearnClient({ course, modules: initialModules, enr
     )
   }
 
-  const contentIcon = (type: string) => {
-    switch (type) {
-      case 'video': return <Play className="h-4 w-4" />
-      case 'pdf': return <FileText className="h-4 w-4" />
-      case 'quiz': return <HelpCircle className="h-4 w-4" />
-      default: return <BookOpen className="h-4 w-4" />
-    }
-  }
-
-  const getContentTypeForLesson = useCallback((lesson: Lesson): string => {
-    if (lesson.content_type) return lesson.content_type
-    if (lesson.video_url || lesson.video_id) return 'video'
-    if (lesson.pdf_url) return 'pdf'
-    if (lesson.text_content) return 'text'
-    return 'video'
-  }, [])
-
   return (
     <ErrorBoundary fallbackTitle="Course content error" fallbackMessage="Failed to load course content. Please try again.">
       <div className="bg-slate-50 min-h-screen">
