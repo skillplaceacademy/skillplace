@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase/client'
+import { SafeImg } from '@/components/ui/safe-image'
 
 interface Project {
   id: string
@@ -66,7 +67,7 @@ export default function ProjectsPage() {
               <div key={project.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                 <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center overflow-hidden">
                   {project.image_url ? (
-                    <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <SafeImg src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
                     <div className="text-center">
                       <ExternalLink className="h-10 w-10 text-slate-300 mx-auto mb-2" />

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Search, Plus, Edit, Trash2 } from 'lucide-react'
 import { getRecords, getRecord, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { SafeImg } from '@/components/ui/safe-image'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
 import { getFullPhone } from '@/lib/validation/phone'
@@ -444,7 +445,7 @@ export default function AdminEmployeesPage() {
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       {employee.photo_url ? (
-                        <img src={employee.photo_url} alt={employee.name} className="h-8 w-8 rounded-lg object-cover shrink-0" />
+                        <SafeImg src={employee.photo_url} alt={employee.name} className="h-8 w-8 rounded-lg object-cover shrink-0" />
                       ) : (
                         <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                           <span className="text-sm font-bold text-blue-600">

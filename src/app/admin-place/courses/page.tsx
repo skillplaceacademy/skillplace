@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Search, Plus, Edit, Trash2, X } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
+import { SafeImg } from '@/components/ui/safe-image'
 import { notify } from '@/lib/notifications'
 
 interface Course {
@@ -471,7 +472,7 @@ export default function AdminCoursesPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         {course.thumbnail_url ? (
-                          <img
+                          <SafeImg
                             src={course.thumbnail_url}
                             alt={course.title}
                             className="h-10 w-10 rounded-lg object-cover"

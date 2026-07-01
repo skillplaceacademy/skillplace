@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Search, BookOpen, Layers, FileText, HelpCircle, ChevronRight } from 'lucide-react'
 import { getRecords } from '@/lib/admin-api'
+import { SafeImg } from '@/components/ui/safe-image'
 
 interface DbLesson {
   id: string
@@ -175,7 +176,7 @@ export default function AdminContentPage() {
                   className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors group"
                 >
                   {course.thumbnail_url ? (
-                    <img
+                    <SafeImg
                       src={course.thumbnail_url}
                       alt={course.title}
                       className="h-12 w-12 rounded-xl object-cover shrink-0"

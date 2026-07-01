@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
-import { getProgramImage } from '@/lib/utils'
+import { getProgramImage, getSupabaseImageUrl } from '@/lib/utils'
 import PhoneInput from '@/components/ui/phone-input'
 import { getFullPhone } from '@/lib/validation/phone'
+import { SafeImg } from '@/components/ui/safe-image'
 
 interface ProgramDetail {
   id: string
@@ -214,7 +215,7 @@ export default function ProgramDetailPage() {
 
           <div className="hidden lg:block relative">
             <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl rotate-3 border-2 border-white/10">
-              <img
+              <SafeImg
                 className="w-full h-full object-cover"
                 alt={program.name}
                 src={getProgramImage(program.branches?.slug || '')}
@@ -352,7 +353,7 @@ export default function ProgramDetailPage() {
                 <img
                   className="rounded-2xl border border-border-subtle shadow-sm w-full object-cover max-h-72"
                   alt="Curriculum CAD Illustration"
-                  src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/program-detail.jpg"
+                  src={getSupabaseImageUrl('program-detail.jpg')}
                 />
               </div>
             </div>
