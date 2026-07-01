@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
-import { getProgramImage } from '@/lib/utils'
+import { getProgramImage, getSupabaseImageUrl } from '@/lib/utils'
 
 // Note: Metadata for client components must be handled in a parent server component
 // or layout. This page is client-side due to filter state.
@@ -323,7 +323,7 @@ export default function ProgramsPage() {
               <div className="aspect-video rounded-xl overflow-hidden shadow-2xl">
                 <div
                   className="bg-cover bg-center w-full h-full"
-                  style={{ backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/programs-hero-bg.jpg')" }}
+                  style={{ backgroundImage: `url('${getSupabaseImageUrl('programs-hero-bg.jpg')}')` }}
                 />
               </div>
               <div className="absolute -bottom-6 -left-6 bg-secondary p-6 rounded-lg shadow-xl hidden lg:block">

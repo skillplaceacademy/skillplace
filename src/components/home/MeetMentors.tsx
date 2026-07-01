@@ -1,7 +1,8 @@
 'use client'
 import { useState, useRef } from 'react'
-import Image from 'next/image'
 import SectionReveal from './SectionReveal'
+import { getSupabaseImageUrl } from '@/lib/utils'
+import { SafeImg } from '@/components/ui/safe-image'
 
 const mentors = [
   {
@@ -12,7 +13,7 @@ const mentors = [
     bio: 'Visionary leader building AI solutions for industry. Passionate about practical engineering education.',
     initials: 'PD',
     color: 'bg-violet-600',
-    image: '/images/mentor-prakash.png',
+    image: getSupabaseImageUrl('mentor-prakash.png'),
   },
   {
     name: 'Gopal Krishn Sahu',
@@ -22,14 +23,12 @@ const mentors = [
     bio: '20+ years in automation & control systems. Dedicated to bridging the gap between academia and industry.',
     initials: 'GS',
     color: 'bg-blue-600',
-    image: '/images/mentor-gopal.png',
+    image: getSupabaseImageUrl('mentor-gopal.png'),
   },
 ]
 
 function MentorPhoto({ mentor }: { mentor: typeof mentors[0] }) {
-  const [imgError, setImgError] = useState(false)
-
-  if (imgError || !mentor.image) {
+  if (!mentor.image) {
     return (
       <div className={`w-24 h-24 rounded-full ${mentor.color} flex items-center justify-center text-white text-2xl font-bold mb-6 shadow-lg group-hover:scale-105 transition-transform duration-300`}>
         {mentor.initials}
@@ -39,13 +38,15 @@ function MentorPhoto({ mentor }: { mentor: typeof mentors[0] }) {
 
   return (
     <div className="w-24 h-24 rounded-full bg-white mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 border border-border-subtle overflow-hidden relative">
-      <Image
+      <SafeImg
         src={mentor.image}
         alt={`${mentor.name} photo`}
-        fill
-        sizes="96px"
-        className="object-cover"
-        onError={() => setImgError(true)}
+        className="w-full h-full object-cover"
+        fallback={
+          <div className={`w-24 h-24 rounded-full ${mentor.color} flex items-center justify-center text-white text-2xl font-bold`}>
+            {mentor.initials}
+          </div>
+        }
       />
     </div>
   )

@@ -1,8 +1,15 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { getSupabaseUrl } from "./supabase/config"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+const SUPABASE_STORAGE_BASE = `${getSupabaseUrl()}/storage/v1/object/public/skillplaceacademy/images`
+
+export function getSupabaseImageUrl(filename: string): string {
+  return `${SUPABASE_STORAGE_BASE}/${filename}`
 }
 
 /**
@@ -12,14 +19,14 @@ export function cn(...inputs: ClassValue[]) {
 export function getProgramImage(branchSlug: string): string {
   switch (branchSlug) {
     case 'civil':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-engineering.jpg'
+      return getSupabaseImageUrl('course-civil-engineering.jpg')
     case 'mechanical':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-mechanical-engineering.jpg'
+      return getSupabaseImageUrl('course-mechanical-engineering.jpg')
     case 'electronics':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-electronics-automation.jpg'
+      return getSupabaseImageUrl('course-electronics-automation.jpg')
     case 'electrical':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-fallback.jpg'
+      return getSupabaseImageUrl('course-civil-fallback.jpg')
     default:
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-engineering.jpg'
+      return getSupabaseImageUrl('course-civil-engineering.jpg')
   }
 }

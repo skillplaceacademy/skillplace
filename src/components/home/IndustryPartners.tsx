@@ -1,52 +1,47 @@
 'use client'
 import { useState, useRef } from 'react'
-import Image from 'next/image'
 import SectionReveal from './SectionReveal'
+import { getSupabaseImageUrl } from '@/lib/utils'
+import { SafeImg } from '@/components/ui/safe-image'
 
 const partners = [
   {
     name: 'Autommensor Automation Pvt Ltd',
     short: 'Autommensor',
     desc: 'Industrial automation & control systems',
-    logo: '/images/partner-autommensor.png',
+    logo: getSupabaseImageUrl('partner-autommensor.png'),
     color: 'bg-blue-600',
   },
   {
     name: 'Dozert AI',
     short: 'Dozert',
     desc: 'AI-powered technology solutions',
-    logo: '/images/partner-dozert-ai.png',
+    logo: getSupabaseImageUrl('partner-dozert-ai.png'),
     color: 'bg-violet-600',
   },
   {
     name: 'Himanshu Construction',
     short: 'Himanshu',
     desc: 'Civil construction & infrastructure',
-    logo: '/images/partner-himanshu-construction.png',
+    logo: getSupabaseImageUrl('partner-himanshu-construction.png'),
     color: 'bg-amber-600',
   },
 ]
 
 function PartnerLogo({ partner }: { partner: typeof partners[0] }) {
-  const [imgError, setImgError] = useState(false)
-
-  if (imgError) {
-    return (
-      <div className={`w-20 h-20 rounded-2xl ${partner.color} mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300`}>
-        <span className="text-white font-bold text-2xl">{partner.short[0]}</span>
-      </div>
-    )
-  }
-
   return (
     <div className="mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 border border-border-subtle rounded-2xl bg-white p-3 max-w-[140px] min-w-[80px]">
-      <Image
+      <SafeImg
         src={partner.logo}
         alt={`${partner.name} logo`}
         width={140}
         height={80}
         className="object-contain w-auto h-auto max-w-[120px] max-h-[60px]"
-        onError={() => setImgError(true)}
+        fallback={
+          <div className={`w-20 h-20 rounded-2xl ${partner.color} flex items-center justify-center`}>
+            <span className="text-white font-bold text-2xl">{partner.short[0]}</span>
+          </div>
+        }
       />
     </div>
   )

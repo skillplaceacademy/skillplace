@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
 import { User, Mail, MapPin, Calendar, Camera, Save, Loader2 } from 'lucide-react'
+import { SafeImg } from '@/components/ui/safe-image'
 import PhoneInput from '@/components/ui/phone-input'
 
 export default function ProfilePage() {
@@ -169,7 +170,7 @@ export default function ProfilePage() {
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200 p-6 flex items-center gap-5">
           <div className="h-20 w-20 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
             {profile.avatar_url ? (
-              <img
+              <SafeImg
                 src={profile.avatar_url}
                 alt={profile.full_name || 'User'}
                 className="h-20 w-20 rounded-2xl object-cover"

@@ -1,20 +1,7 @@
 'use client';
 import Link from 'next/link';
-
-const getProgramImage = (branchSlug) => {
-  switch (branchSlug) {
-    case 'civil':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-engineering.jpg';
-    case 'mechanical':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-mechanical-engineering.jpg';
-    case 'electronics':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-electronics-automation.jpg';
-    case 'electrical':
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-fallback.jpg';
-    default:
-      return 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-engineering.jpg';
-  }
-};
+import { getProgramImage, getSupabaseImageUrl } from '@/lib/utils';
+import { SafeImg } from '@/components/ui/safe-image';
 
 const renderBadge = (type) => {
   switch (type) {
@@ -71,7 +58,7 @@ export default function OurTrainingProgram({ trainingPrograms }) {
               className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 flex flex-col h-full block min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always"
             >
               <div className="relative aspect-video">
-                <img className="w-full h-full object-cover" alt={p.name} src={getProgramImage(p.branches?.slug)} />
+                <SafeImg className="w-full h-full object-cover" alt={p.name} src={getProgramImage(p.branches?.slug)} />
                 {renderBadge(p.program_type)}
               </div>
               <div className="p-6 flex flex-col justify-between flex-grow">
@@ -104,7 +91,7 @@ export default function OurTrainingProgram({ trainingPrograms }) {
             {/* Static Default Fallbacks */}
             <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always">
               <div className="relative aspect-video">
-                <img className="w-full h-full object-cover" alt="Civil Engineering" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-civil-engineering.jpg" />
+                <SafeImg className="w-full h-full object-cover" alt="Civil Engineering" src={getSupabaseImageUrl('course-civil-engineering.jpg')} />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
                   <span className="text-caption font-bold text-secondary uppercase tracking-widest">Online</span>
                 </div>
@@ -124,7 +111,7 @@ export default function OurTrainingProgram({ trainingPrograms }) {
             </div>
             <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always">
               <div className="relative aspect-video">
-                <img className="w-full h-full object-cover" alt="Mechanical Engineering" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-mechanical-engineering.jpg" />
+                <SafeImg className="w-full h-full object-cover" alt="Mechanical Engineering" src={getSupabaseImageUrl('course-mechanical-engineering.jpg')} />
                 <div className="absolute top-4 right-4 bg-secondary text-white px-3 py-1 rounded-full shadow-sm">
                   <span className="text-caption font-bold uppercase tracking-widest">Offline</span>
                 </div>
@@ -144,7 +131,7 @@ export default function OurTrainingProgram({ trainingPrograms }) {
             </div>
             <div className="group bg-white rounded-xl border border-border-subtle overflow-hidden card-shadow transition-all duration-300 min-w-[80vw] sm:min-w-[50vw] md:min-w-0 snap-center snap-always">
               <div className="relative aspect-video">
-                <img className="w-full h-full object-cover" alt="Electronics & Automation" src="https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-electronics-automation.jpg" />
+                <SafeImg className="w-full h-full object-cover" alt="Electronics & Automation" src={getSupabaseImageUrl('course-electronics-automation.jpg')} />
                 <div className="absolute top-4 right-4 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full shadow-sm">
                   <span className="text-caption font-bold uppercase tracking-widest">Hybrid</span>
                 </div>

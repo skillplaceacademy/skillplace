@@ -1,23 +1,25 @@
 import Link from 'next/link'
+import { getSupabaseImageUrl } from '@/lib/utils'
+import { SafeImg } from '@/components/ui/safe-image'
 
 const teamMembers = [
   {
     name: 'Dr. Rajesh Mehta',
     role: 'Founder & Director',
     specialty: 'Civil Engineering Expert',
-    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-team-founder.jpg',
+    image: getSupabaseImageUrl('about-team-founder.jpg'),
   },
   {
     name: 'Prof. Sunita Sharma',
     role: 'Head of Training',
     specialty: 'Mechanical Engineering Lead',
-    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-team-training-head.jpg',
+    image: getSupabaseImageUrl('about-team-training-head.jpg'),
   },
   {
     name: 'Er. Amit Deshmukh',
     role: 'Placement Head',
     specialty: 'Electronics & IT Specialist',
-    image: 'https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-team-placement-head.jpg',
+    image: getSupabaseImageUrl('about-team-placement-head.jpg'),
   },
 ]
 
@@ -40,7 +42,7 @@ export default function AboutPage() {
         <div
           className="absolute inset-0 z-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/about-hero-bg.jpg')",
+            backgroundImage: `url('${getSupabaseImageUrl('about-hero-bg.jpg')}')`,
           }}
         />
         {/* Gradient overlay */}
@@ -161,7 +163,7 @@ export default function AboutPage() {
             {teamMembers.map((member) => (
               <div key={member.name} className="text-center group">
                 <div className="relative mb-8 mx-auto w-64 h-64 overflow-hidden rounded-2xl bg-surface-container">
-                  <img
+                  <SafeImg
                     src={member.image}
                     alt={member.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"

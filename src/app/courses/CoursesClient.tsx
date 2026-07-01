@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { Course } from '@/types'
 import { supabase } from '@/lib/supabase/client'
+import { getSupabaseImageUrl } from '@/lib/utils'
+import { SafeImg } from '@/components/ui/safe-image'
 
 interface Branch {
   id: string
@@ -130,7 +132,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                 <div key={course.id} className="tonal-card rounded-xl overflow-hidden flex flex-col group border-2 border-secondary/20">
                   <div className="h-48 bg-surface-container overflow-hidden relative">
                     {course.thumbnail_url ? (
-                      <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <SafeImg src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <span className="material-symbols-outlined text-5xl text-on-surface-variant/30" style={{ fontVariationSettings: '"FILL" 1' }}>
@@ -265,7 +267,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
             <div className="hidden md:block w-1/3 rounded-xl overflow-hidden relative min-h-[200px]">
               <div
                 className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/courses-hero-bg.jpg')" }}
+                style={{ backgroundImage: `url('${getSupabaseImageUrl('courses-hero-bg.jpg')}')` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent" />
             </div>
@@ -338,7 +340,7 @@ export default function CoursesClient({ courses, categories }: CoursesClientProp
                     {/* Thumbnail */}
                     <div className="h-48 bg-surface-container overflow-hidden relative">
                       {course.thumbnail_url ? (
-                        <img
+                        <SafeImg
                           src={course.thumbnail_url}
                           alt={course.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

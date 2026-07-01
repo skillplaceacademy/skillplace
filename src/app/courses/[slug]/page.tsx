@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { adminSupabase } from '@/lib/supabase/admin'
 import EnrollButton from '@/components/courses/EnrollButton'
 import Link from 'next/link'
+import { getSupabaseImageUrl } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -104,7 +105,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                 ) : (
                   <div 
                     className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
-                    style={{ backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-detail-gallery.jpg')" }}
+                    style={{ backgroundImage: `url('${getSupabaseImageUrl('course-detail-gallery.jpg')}')` }}
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-primary-container/80 via-primary-container/20 to-transparent flex items-center justify-center">
@@ -263,7 +264,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                 Explore Full Programs <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
             </div>
-            <div className="relative min-h-[300px] bg-cover bg-center" style={{ backgroundImage: "url('https://weebasgxtemffakbvcfa.supabase.co/storage/v1/object/public/skillplaceacademy/images/course-detail-banner.jpg')" }}>
+            <div className="relative min-h-[300px] bg-cover bg-center" style={{ backgroundImage: `url('${getSupabaseImageUrl('course-detail-banner.jpg')}')` }}>
               <div className="absolute inset-0 bg-gradient-to-l from-transparent to-secondary-fixed lg:block hidden"></div>
             </div>
           </div>

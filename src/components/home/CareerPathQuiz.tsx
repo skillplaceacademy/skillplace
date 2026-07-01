@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase/client'
 import { notify } from '@/lib/notifications'
 import PhoneInput from '@/components/ui/phone-input'
 import { getFullPhone } from '@/lib/validation/phone'
+import { getSupabaseImageUrl } from '@/lib/utils'
+import { SafeImg } from '@/components/ui/safe-image'
 
 interface QuizAnswers {
   status: string
@@ -46,7 +48,7 @@ export default function CareerPathQuiz() {
         return {
           title: `Civil Engineering - ${modeStr}`,
           desc: 'A comprehensive curriculum focused on AutoCAD, Revit, Quantity Estimation, and Site Execution with 100% placement support.',
-          img: '/images/course-civil-engineering.jpg',
+          img: getSupabaseImageUrl('course-civil-engineering.jpg'),
           skills: ['AutoCAD 2D/3D', 'Revit Architecture', 'Staad Pro', 'Quantity Surveying', 'BOQ & Billing'],
           salary: '₹3.5L - ₹6L per annum'
         }
@@ -54,7 +56,7 @@ export default function CareerPathQuiz() {
         return {
           title: `Mechanical Engineering Design - ${modeStr}`,
           desc: 'Master SolidWorks, GD&T, and CNC programming. Specially designed for students aiming for core R&D and manufacturing jobs.',
-          img: '/images/course-mechanical-engineering.jpg',
+          img: getSupabaseImageUrl('course-mechanical-engineering.jpg'),
           skills: ['SolidWorks CAD', 'GD&T (Geometric Dimensioning & Tolerancing)', 'Production Drawings', 'CNC Basics'],
           salary: '₹3.6L - ₹6.5L per annum'
         }
@@ -62,7 +64,7 @@ export default function CareerPathQuiz() {
         return {
           title: `Electrical Systems Design - ${modeStr}`,
           desc: 'Learn LT/HT Panel Designing, Substation layouts, Solar design, and basic PLC automation for modern utility grid industries.',
-          img: '/images/course-civil-fallback.jpg', // Fallback or utility
+          img: getSupabaseImageUrl('course-civil-fallback.jpg'),
           skills: ['LT/HT Cable Sizing', 'AutoCAD Electrical', 'Panel Designing', 'Solar PV Design', 'Earthing Calculation'],
           salary: '₹3.2L - ₹5.8L per annum'
         }
@@ -70,7 +72,7 @@ export default function CareerPathQuiz() {
         return {
           title: `Industrial Automation & ECE - ${modeStr}`,
           desc: 'Specialized program on PLCs (Siemens, Delta), SCADA, HMI, VFD, and Industrial Sensors. Critical for manufacturing/process industries.',
-          img: '/images/course-electronics-automation.jpg',
+          img: getSupabaseImageUrl('course-electronics-automation.jpg'),
           skills: ['PLC Ladder Programming', 'SCADA & HMI Design', 'VFD & Motor Control', 'Sensor Integration', 'Industrial IoT'],
           salary: '₹4.0L - ₹7.2L per annum'
         }
@@ -78,7 +80,7 @@ export default function CareerPathQuiz() {
         return {
           title: `Master Engineering Core - ${modeStr}`,
           desc: 'Explore various job-oriented training courses under our premium placement programs.',
-          img: '/images/home-engineering-students.jpg',
+          img: getSupabaseImageUrl('home-engineering-students.jpg'),
           skills: ['Industry Software Tools', 'Practical Lab Work', 'Resume and Interview Prep', '100% Placements Support'],
           salary: '₹3L - ₹6L per annum'
         }
@@ -195,10 +197,10 @@ Recommended Program: ${rec.title}
               <h3 className="text-headline-md font-bold text-primary mb-6">Which engineering branch or sector interests you most?</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { id: 'civil', label: 'Civil & Construction', desc: 'AutoCAD, Revit, Estimating, Structure design', image: '/images/course-civil-engineering.jpg' },
-                  { id: 'mechanical', label: 'Mechanical & Product Design', desc: 'SolidWorks, GD&T, R&D, Manufacturing design', image: '/images/course-mechanical-engineering.jpg' },
-                  { id: 'electrical', label: 'Electrical Systems & Panels', desc: 'LT/HT Systems, AutoCAD Electrical, Substation design', image: '/images/courses-hero-bg.jpg' },
-                  { id: 'electronics', label: 'Electronics & Automation', desc: 'PLC Coding, SCADA, HMIs, Sensors, Industrial VFD', image: '/images/course-electronics-automation.jpg' },
+                  { id: 'civil', label: 'Civil & Construction', desc: 'AutoCAD, Revit, Estimating, Structure design', image: getSupabaseImageUrl('course-civil-engineering.jpg') },
+                  { id: 'mechanical', label: 'Mechanical & Product Design', desc: 'SolidWorks, GD&T, R&D, Manufacturing design', image: getSupabaseImageUrl('course-mechanical-engineering.jpg') },
+                  { id: 'electrical', label: 'Electrical Systems & Panels', desc: 'LT/HT Systems, AutoCAD Electrical, Substation design', image: getSupabaseImageUrl('courses-hero-bg.jpg') },
+                  { id: 'electronics', label: 'Electronics & Automation', desc: 'PLC Coding, SCADA, HMIs, Sensors, Industrial VFD', image: getSupabaseImageUrl('course-electronics-automation.jpg') },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -206,7 +208,7 @@ Recommended Program: ${rec.title}
                     className="flex flex-col rounded-2xl border border-border-subtle hover:border-secondary hover:bg-secondary/5 text-left transition-all overflow-hidden group"
                   >
                     <div className="h-28 w-full overflow-hidden relative">
-                      <img src={item.image} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <SafeImg src={item.image} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       <div className="absolute inset-0 bg-primary/20" />
                     </div>
                     <div className="p-4">

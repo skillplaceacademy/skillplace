@@ -99,7 +99,7 @@ export default async function Home() {
       {/* ═══════════════════════════════════════════
           7.5 BOOK A FREE CAREER CONSULTATION
           ═══════════════════════════════════════════ */}
-      <ConsultationBooking />
+      {/* <ConsultationBooking /> */}
 
       {/* ═══════════════════════════════════════════
           8. OUR TRAINING PROGRAMS 

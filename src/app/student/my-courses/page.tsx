@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { BookOpen } from 'lucide-react'
+import { SafeImg } from '@/components/ui/safe-image'
 
 interface Enrollment {
   id: string
@@ -64,7 +65,7 @@ export default function MyCoursesPage() {
             <div key={enrollment.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-6 hover:shadow-md transition-all duration-300">
               <div className="h-20 w-20 bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl shrink-0 overflow-hidden flex items-center justify-center">
                 {enrollment.courses?.thumbnail_url ? (
-                  <img src={enrollment.courses.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                  <SafeImg src={enrollment.courses.thumbnail_url} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <BookOpen className="h-6 w-6 text-slate-300" />
                 )}
