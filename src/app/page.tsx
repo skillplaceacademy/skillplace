@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getCourses, getTestimonials, getTrainingPrograms } from '@/lib/supabase/queries'
+import { getCourses, getTestimonials, getFeaturedTrainingPrograms } from '@/lib/supabase/queries'
 import ScrollProgress from '@/components/home/ScrollProgress'
 import HeroSection from '@/components/home/HeroSection'
 import TrustIndicators from '@/components/home/TrustIndicators'
@@ -7,7 +7,7 @@ import WhyChooseUs from '@/components/home/WhyChooseUs'
 import StudentJourney from '@/components/home/StudentJourney'
 import CareerPathQuiz from '@/components/home/CareerPathQuiz'
 import CareerOpportunities from '@/components/home/CareerOpportunities'
-import OurTrainingProgram from '@/components/home/OurTrainingProgram'
+import FeaturedPrograms from '@/components/home/FeaturedPrograms'
 import JobCoursesSection from '@/components/home/JobCoursesSection'
 import MeetMentors from '@/components/home/MeetMentors'
 import IndustryPartners from '@/components/home/IndustryPartners'
@@ -23,10 +23,10 @@ const getCoursesList = (dbCourses: string[], fallbacks: string[]) => {
 }
 
 export default async function Home() {
-  const [courses, testimonials, trainingPrograms] = await Promise.all([
+  const [courses, testimonials, featuredPrograms] = await Promise.all([
     getCourses(),
     getTestimonials(),
-    getTrainingPrograms(),
+    getFeaturedTrainingPrograms(),
   ])
 
   // Extract dynamic courses per branch
@@ -86,9 +86,9 @@ export default async function Home() {
       <CareerOpportunities />
 
       {/* ═══════════════════════════════════════════
-          7. TRAINING PROGRAMS — DESIRE (learning paths)
+          7. FEATURED PROGRAMS — DESIRE (premium learning paths)
           ═══════════════════════════════════════════ */}
-      <OurTrainingProgram trainingPrograms={trainingPrograms} />
+      <FeaturedPrograms programs={featuredPrograms} />
 
       {/* ═══════════════════════════════════════════
           8. JOB-ORIENTED COURSES — INTEREST (curriculum detail)

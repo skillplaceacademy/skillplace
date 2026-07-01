@@ -51,6 +51,12 @@ export interface TrainingProgram {
   discount_price: number | null
   duration_weeks: number | null
   features: string[] | null
+  is_featured: boolean
+  skill_level: 'beginner' | 'intermediate' | 'advanced' | null
+  career_outcome: string | null
+  student_count: number
+  rating: number
+  display_order: number
   is_active: boolean
   created_at: string
   updated_at: string

@@ -71,3 +71,5 @@ CREATE INDEX IF NOT EXISTS idx_training_programs_branch_id ON training_programs(
 CREATE INDEX IF NOT EXISTS idx_training_programs_slug ON training_programs(slug);
 CREATE INDEX IF NOT EXISTS idx_training_programs_is_active ON training_programs(is_active);
 CREATE INDEX IF NOT EXISTS idx_training_programs_program_type ON training_programs(program_type);
+CREATE INDEX IF NOT EXISTS idx_training_programs_is_featured ON training_programs(is_featured);
+CREATE INDEX IF NOT EXISTS idx_training_programs_display_order ON training_programs(display_order);

@@ -12,7 +12,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Search, Plus, Edit, Trash2, X, Loader2, AlertCircle } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, X, Loader2, AlertCircle, Star } from 'lucide-react'
 import { getRecords, createRecord, updateRecord, deleteRecord } from '@/lib/admin-api'
 import { notify } from '@/lib/notifications'
 import type { TrainingProgram, ProgramCourse, Branch, Course } from '@/types'
@@ -27,6 +27,12 @@ interface ProgramFormData {
   price: number
   discount_price: number
   duration_weeks: number
+  is_featured: boolean
+  skill_level: string
+  career_outcome: string
+  student_count: number
+  rating: number
+  display_order: number
   is_active: boolean
 }
 
@@ -40,6 +46,12 @@ const INITIAL_FORM_DATA: ProgramFormData = {
   price: 0,
   discount_price: 0,
   duration_weeks: 0,
+  is_featured: false,
+  skill_level: '',
+  career_outcome: '',
+  student_count: 0,
+  rating: 0,
+  display_order: 0,
   is_active: true,
 }
 
@@ -130,6 +142,12 @@ export default function AdminProgramsPage() {
         discount_price: formData.discount_price || null,
         duration_weeks: formData.duration_weeks || null,
         features,
+        is_featured: formData.is_featured,
+        skill_level: formData.skill_level || null,
+        career_outcome: formData.career_outcome || null,
+        student_count: formData.student_count,
+        rating: formData.rating,
+        display_order: formData.display_order,
         is_active: formData.is_active,
       }
 
@@ -208,6 +226,12 @@ export default function AdminProgramsPage() {
       price: program.price || 0,
       discount_price: program.discount_price || 0,
       duration_weeks: program.duration_weeks || 0,
+      is_featured: program.is_featured ?? false,
+      skill_level: program.skill_level || '',
+      career_outcome: program.career_outcome || '',
+      student_count: program.student_count || 0,
+      rating: program.rating || 0,
+      display_order: program.display_order || 0,
       is_active: program.is_active ?? true,
     })
     setFeaturesText((program.features || []).join(', '))
@@ -225,6 +249,19 @@ export default function AdminProgramsPage() {
     setSelectedCourses((prev) =>
       prev.includes(courseId) ? prev.filter((c) => c !== courseId) : [...prev, courseId]
     )
+  }
+
+  async function toggleFeatured(program: TrainingProgram) {
+    const newValue = !program.is_featured
+    try {
+      await updateRecord('training_programs', program.id, { is_featured: newValue })
+      setPrograms((prev) =>
+        prev.map((p) => (p.id === program.id ? { ...p, is_featured: newValue } : p))
+      )
+      notify.statusToggled(newValue)
+    } catch (err) {
+      notify.genericError(err instanceof Error ? err.message : 'Failed to update featured status')
+    }
   }
 
   const filteredPrograms = programs.filter((p) =>
@@ -371,6 +408,71 @@ export default function AdminProgramsPage() {
                 <span className="text-sm font-medium text-slate-700">Active</span>
               </label>
             </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.is_featured}
+                  onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
+                />
+                <span className="text-sm font-medium text-slate-700">Featured on Homepage</span>
+              </label>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1 block">Skill Level</label>
+              <select
+                value={formData.skill_level}
+                onChange={(e) => setFormData({ ...formData, skill_level: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">None</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1 block">Career Outcome</label>
+              <Input
+                value={formData.career_outcome}
+                onChange={(e) => setFormData({ ...formData, career_outcome: e.target.value })}
+                placeholder="e.g. Become an AutoCAD Designer"
+                className="border-slate-300"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1 block">Student Count</label>
+              <Input
+                type="number"
+                value={formData.student_count}
+                onChange={(e) => setFormData({ ...formData, student_count: Number(e.target.value) })}
+                className="border-slate-300"
+                min={0}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1 block">Rating (0-5)</label>
+              <Input
+                type="number"
+                value={formData.rating}
+                onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })}
+                className="border-slate-300"
+                min={0}
+                max={5}
+                step={0.1}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1 block">Display Order</label>
+              <Input
+                type="number"
+                value={formData.display_order}
+                onChange={(e) => setFormData({ ...formData, display_order: Number(e.target.value) })}
+                className="border-slate-300"
+                min={0}
+              />
+            </div>
             <div className="sm:col-span-2">
               <label className="text-sm font-medium text-slate-700 mb-1 block">Features (comma-separated)</label>
               <Input
@@ -456,6 +558,7 @@ export default function AdminProgramsPage() {
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Price</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Duration</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Courses</th>
+                <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Featured</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Status</th>
                 <th className="text-left px-5 py-3.5 text-sm font-semibold text-slate-600">Actions</th>
               </tr>
@@ -463,14 +566,14 @@ export default function AdminProgramsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-slate-500">
+                  <td colSpan={9} className="px-5 py-12 text-center text-slate-500">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-blue-500" />
                     Loading programs...
                   </td>
                 </tr>
               ) : filteredPrograms.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-slate-500">
+                  <td colSpan={9} className="px-5 py-12 text-center text-slate-500">
                     {search ? 'No programs match your search.' : 'No training programs found. Create your first program!'}
                   </td>
                 </tr>
@@ -497,6 +600,26 @@ export default function AdminProgramsPage() {
                     </td>
                     <td className="px-5 py-3.5 text-sm text-slate-600">
                       {(programCourses[program.id] || []).length}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => toggleFeatured(program)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer"
+                        title={program.is_featured ? 'Click to remove from featured' : 'Click to mark as featured'}
+                      >
+                        <Star
+                          className={`h-3.5 w-3.5 ${
+                            program.is_featured
+                              ? 'text-amber-500 fill-amber-400'
+                              : 'text-slate-300 fill-transparent'
+                          }`}
+                        />
+                        <span className={
+                          program.is_featured ? 'text-amber-700 bg-amber-50' : 'text-slate-400 bg-slate-100'
+                        }>
+                          {program.is_featured ? 'Featured' : 'Not Featured'}
+                        </span>
+                      </button>
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge

@@ -58,6 +58,34 @@ export async function getTrainingPrograms() {
   return data || []
 }
 
+export async function getFeaturedTrainingPrograms() {
+  const { data, error } = await adminSupabase
+    .from('training_programs')
+    .select('*, branches(*)')
+    .eq('is_active', true)
+    .eq('is_featured', true)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    return []
+  }
+
+  if (data && data.length > 0) {
+    return data
+  }
+
+  const { data: fallbackData } = await adminSupabase
+    .from('training_programs')
+    .select('*, branches(*)')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(6)
+
+  return fallbackData || []
+}
+
 export async function getProgramCourses(programId: string) {
   const { data, error } = await adminSupabase
     .from('program_courses')
